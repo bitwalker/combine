@@ -513,7 +513,7 @@ defmodule Combine.Parsers.Base do
   defcombinator sep_by(parser1, parser2, parser3)
 
   @doc """
-  Applies `parser` zero or more times, ignores the result.
+  Applies `parser` if possible, ignores the result.
 
   # Example
 
@@ -528,6 +528,33 @@ defmodule Combine.Parsers.Base do
   def skip(parser) when is_function(parser, 1) do
     ignore(option(parser))
   end
+
+  @doc """
+  Same as skip/1, but acts as a combinator
+  """
+  defcombinator skip(parser1, parser2)
+
+  @doc """
+  Applies `parser` zero or more times, ignores the result.
+
+  # Example
+
+  iex> import #{__MODULE__}
+  ...> import Combine.Parsers.Text
+  ...> Combine.parse("   abc", skip_many(space) |> word)
+  ["abc"]
+  ...> Combine.parse("", skip_many(space))
+  []
+  """
+  @spec skip_many(parser) :: parser
+  def skip_many(parser) when is_function(parser, 1) do
+    ignore(many(parser))
+  end
+
+  @doc """
+  Same as skip_many/1, but acts as a combinator
+  """
+  defcombinator skip_many(parser1, parser2)
 
   @doc """
   Applies `parser` one or more times, ignores the result.
@@ -546,6 +573,10 @@ defmodule Combine.Parsers.Base do
     ignore(many1(parser))
   end
 
+  @doc """
+  Same as skip_many1/1, but acts as a combinator
+  """
+  defcombinator skip_many1(parser1, parser2)
 
   @doc """
   This parser will apply the given parser to the input, and if successful,
