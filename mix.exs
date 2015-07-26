@@ -14,7 +14,10 @@ defmodule Combine.Mixfile do
 
   def application, do: [applications: []]
 
-  defp deps, do: []
+  defp deps do
+    [{:earmark, "~> 0.1", only: :docs},
+     {:ex_doc, "~> 0.5", only: :docs}]
+  end
 
   defp package do
     [ files: ["lib", "priv", "mix.exs", "README.md", "LICENSE.md"],
