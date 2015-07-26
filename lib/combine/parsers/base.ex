@@ -432,9 +432,9 @@ defmodule Combine.Parsers.Base do
       %ParserState{} = state -> state
     end
   end
+  defp many1_loop(0, _, %ParserState{status: :error} = err, _parser), do: {0, err}
   defp many1_loop(iteration, %ParserState{} = _last, %ParserState{status: :ok} = s, parser),
     do: many1_loop(iteration + 1, s, parser.(s), parser)
-  defp many1_loop(0, _, %ParserState{status: :error} = err, _parser), do: {0, err}
   defp many1_loop(iterations, %ParserState{} = s, %ParserState{status: :error}, _parser), do: {iterations, s}
 
   @doc """
