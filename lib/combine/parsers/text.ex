@@ -691,7 +691,12 @@ defmodule Combine.Parsers.Text do
       %ParserState{} = state -> state
     end
   end
-  defp extract_float(<<>>, acc, _, _), do: {:ok, acc}
+  defp extract_float(<<>>, acc, extracting_fractional, _) do
+    cond do
+      extracting_fractional -> {:ok, acc}
+      true -> {:error, {:incomplete_float, acc}}
+    end
+  end
   defp extract_float(input, acc, extracting_fractional, last_char) do
     case String.next_codepoint(input) do
       {cp, rest} when cp in @digits -> extract_float(rest, acc <> cp, extracting_fractional, cp)
