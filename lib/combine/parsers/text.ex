@@ -254,6 +254,7 @@ defmodule Combine.Parsers.Text do
   """
   @spec spaces() :: parser
   def spaces() do
+    # TODO: infinite loop in spaces when combined with many1
     fn
       %ParserState{status: :ok, column: col, input: input, results: results} = state ->
         case String.next_codepoint(input) do
