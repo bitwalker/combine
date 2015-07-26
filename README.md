@@ -28,10 +28,48 @@ iex> import Combine.Parsers.Base
 
 ## Parsers
 
-Will be updated as soon as the initial set of parsers is completed.
+You should look at the docs for usage on each parser combinator, but the following
+lists which ones are available in each module.
+
+### Combine.Parsers.Base
+--------
+```
+between         both
+choice          either
+eof             fail
+fatal           ignore
+label           many
+map             none_of
+one_of          option
+pair_both       pair_left
+pair_right      pipe
+satisfy         sep_by
+sep_by1         sequence
+skip            skip_many
+skip_many1      times
+zero
+```
+
+### Combine.Parsers.Text
+--------
+```
+alphanumeric      bin_digit
+char              digit
+float             hex_digit
+hex_digit         integer
+letter            lower
+newline           octal_digit
+space             spaces
+string            tab
+upper             word
+```
+
+## Roadmap
+
+- Binary parsers
+- `Combine.parse_file/1`
+- Streaming parsers
 
 ## License
 
 MIT
-
-
