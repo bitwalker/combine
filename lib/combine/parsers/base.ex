@@ -462,6 +462,57 @@ defmodule Combine.Parsers.Base do
   end
 
   @doc """
+  Applies `parser1` one or more times, separated by `parser2`. Returns
+  results of `parser1` in a list.
+
+  # Example
+
+  iex> import #{__MODULE__}
+  ...> import Combine.Parsers.Text
+  ...> Combine.parse("1, 2, 3", sep_by1(digit, string(", ")))
+  [[1, 2, 3]]
+  """
+  @spec sep_by1(parser, parser) :: parser
+  def sep_by1(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
+    pipe([parser1, many(pair_right(parser2, parser1))], fn [h, t] -> [h|t] end)
+  end
+
+  @doc """
+  Same as sep_by1/2, but acts as a combinator
+  """
+  defcombinator sep_by1(parser1, parser2, parser3)
+
+  @doc """
+  Applies `parser1` zero or more times, separated by `parser2`. Returns
+  results of `parser1` in a list.
+
+  # Example
+
+  iex> import #{__MODULE__}
+  ...> import Combine.Parsers.Text
+  ...> Combine.parse("1, 2, 3", sep_by(digit, string(", ")))
+  [[1, 2, 3]]
+  ...> Combine.parse("", sep_by(digit, string(", ")))
+  [[]]
+  """
+  @spec sep_by(parser, parser) :: parser
+  def sep_by(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
+    fn
+      %ParserState{status: :ok, results: results} = state ->
+        case sep_by1(parser1, parser2).(state) do
+          %ParserState{status: :ok} = s -> s
+          %ParserState{status: :error} -> %{state | :results => [[] | results]}
+        end
+      %ParserState{} = state -> state
+    end
+  end
+
+  @doc """
+  Same as sep_by/2, but acts as a combinator.
+  """
+  defcombinator sep_by(parser1, parser2, parser3)
+
+  @doc """
   This parser will apply the given parser to the input, and if successful,
   will ignore the parse result. If the parser fails, this one fails as well.
 
