@@ -750,4 +750,32 @@ defmodule Combine.Parsers.Base do
   """
   def none_of(parser1, parser2, %Range{} = items), do: none_of(parser1, parser2, items |> Enum.to_list)
   defcombinator none_of(parser1, parser2, items)
+
+  @doc """
+  Applies `parser`. If it fails, it's error is modified to contain the given label for easier troubleshooting.
+
+  # Example
+
+  iex> import #{__MODULE__}
+  ...> import Combine.Parsers.Text
+  ...> Combine.parse("abc", label(integer, "year"))
+  {:error, "Expected `year` at line 1, column 1."}
+  """
+  @spec label(parser, String.t) :: parser
+  def label(parser, name) when is_function(parser, 1) do
+    fn
+      %ParserState{status: :ok} = state ->
+        case parser.(state) do
+          %ParserState{status: :ok} = s -> s
+          %ParserState{line: line, column: col} = s ->
+            %{s | :error => "Expected `#{name}` at line #{line}, column #{col + 1}."}
+        end
+      %ParserState{} = state -> state
+    end
+  end
+
+  @doc """
+  Same as label/2, but acts as a combinator.
+  """
+  defcombinator label(parser1, parser2, text)
 end
