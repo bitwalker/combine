@@ -2,6 +2,9 @@
 
 A parser combinator library for Elixir projects.
 
+[![Master](https://travis-ci.org/bitwalker/combine.svg?branch=master)](https://travis-ci.org/bitwalker/combine)
+[![Hex.pm Version](http://img.shields.io/hexpm/v/combine.svg?style=flat)](https://hex.pm/packages/combine)
+
 ## How to Use
 
 First add it to your dependency list like so:
