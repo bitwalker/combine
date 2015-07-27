@@ -25,9 +25,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi", char)
-  ["H"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi", char)
+      ["H"]
   """
   @spec char() :: parser
   def char() do
@@ -51,10 +51,10 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> parser = char("H")
-  ...> Combine.parse("Hi!", parser)
-  ["H"]
+      iex> import #{__MODULE__}
+      ...> parser = char("H")
+      ...> Combine.parse("Hi!", parser)
+      ["H"]
   """
   @spec char(String.t) :: parser
   def char(c) when is_binary(c) do
@@ -78,9 +78,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("hi", letter)
-  ["h"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("hi", letter)
+      ["h"]
   """
   @spec letter() :: parser
   def letter() do
@@ -100,9 +100,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("hi", char("h") |> letter)
-  ["h", "i"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("hi", char("h") |> letter)
+      ["h", "i"]
   """
   defcombinator letter(parser)
 
@@ -111,10 +111,10 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> parser = char("H") |> char("i") |> char
-  ...> Combine.parse("Hi!", parser)
-  ["H", "i", "!"]
+      iex> import #{__MODULE__}
+      ...> parser = char("H") |> char("i") |> char
+      ...> Combine.parse("Hi!", parser)
+      ["H", "i", "!"]
   """
   @spec char(parser, String.t) :: parser
   def char(parser, c \\ nil) when is_function(parser, 1) do
@@ -138,9 +138,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi", upper)
-  ["H"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi", upper)
+      ["H"]
   """
   @spec upper() :: parser
   def upper() do
@@ -163,9 +163,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("HI", char("H") |> upper)
-  ["H", "I"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("HI", char("H") |> upper)
+      ["H", "I"]
   """
   @spec upper(parser) :: parser
   defcombinator upper(parser)
@@ -175,9 +175,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("hi", lower)
-  ["h"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("hi", lower)
+      ["h"]
   """
   @spec lower() :: parser
   def lower() do
@@ -200,9 +200,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi", char("H") |> lower)
-  ["H", "i"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi", char("H") |> lower)
+      ["H", "i"]
   """
   @spec lower(parser) :: parser
   defcombinator lower(parser)
@@ -212,9 +212,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("  ", space)
-  [" "]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("  ", space)
+      [" "]
   """
   @spec space() :: parser
   def space() do
@@ -235,10 +235,10 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> parser = char("h") |> char("i") |> space |> char("!")
-  ...> Combine.parse("hi !", parser)
-  ["h", "i", " ", "!"]
+      iex> import #{__MODULE__}
+      ...> parser = char("h") |> char("i") |> space |> char("!")
+      ...> Combine.parse("hi !", parser)
+      ["h", "i", " ", "!"]
   """
   defcombinator space(parser)
 
@@ -248,9 +248,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("   hi!", spaces)
-  [" "]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("   hi!", spaces)
+      [" "]
   """
   @spec spaces() :: parser
   def spaces() do
@@ -275,9 +275,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi   Paul", string("Hi") |> spaces |> string("Paul"))
-  ["Hi", " ", "Paul"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi   Paul", string("Hi") |> spaces |> string("Paul"))
+      ["Hi", " ", "Paul"]
   """
   defcombinator spaces(parser)
 
@@ -286,9 +286,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("\t", tab)
-  ["\t"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("\t", tab)
+      ["\t"]
   """
   @spec tab() :: parser
   def tab() do
@@ -309,10 +309,10 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> parser = char("h") |> char("i") |> tab |> char("!")
-  ...> Combine.parse("hi\t!", parser)
-  ["h", "i", "\t", "!"]
+      iex> import #{__MODULE__}
+      ...> parser = char("h") |> char("i") |> tab |> char("!")
+      ...> Combine.parse("hi\t!", parser)
+      ["h", "i", "\t", "!"]
   """
   defcombinator tab(parser)
 
@@ -322,9 +322,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("\\r\\n", newline)
-  ["\\n"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("\\r\\n", newline)
+      ["\\n"]
   """
   @spec newline() :: parser
   def newline() do
@@ -350,9 +350,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("H\\r\\n", upper |> newline)
-  ["H", "\\n"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("H\\r\\n", upper |> newline)
+      ["H", "\\n"]
   """
   defcombinator newline(parser)
 
@@ -361,9 +361,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("1010", digit)
-  [1]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("1010", digit)
+      [1]
   """
   @spec digit() :: parser
   def digit() do
@@ -387,9 +387,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("1010", digit |> digit)
-  [1, 0]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("1010", digit |> digit)
+      [1, 0]
   """
   defcombinator digit(parser)
 
@@ -398,9 +398,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("1010", bin_digit)
-  [1]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("1010", bin_digit)
+      [1]
   """
   @spec bin_digit() :: parser
   def bin_digit() do
@@ -420,9 +420,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("1010", bin_digit |> bin_digit)
-  [1, 0]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("1010", bin_digit |> bin_digit)
+      [1, 0]
   """
   defcombinator bin_digit(parser)
 
@@ -431,9 +431,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("3157", octal_digit)
-  [3]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("3157", octal_digit)
+      [3]
   """
   @spec octal_digit() :: parser
   def octal_digit() do
@@ -453,9 +453,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("3157", octal_digit |> octal_digit)
-  [3, 1]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("3157", octal_digit |> octal_digit)
+      [3, 1]
   """
   defcombinator octal_digit(parser)
 
@@ -464,9 +464,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("d3adbeeF", hex_digit)
-  ["d"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("d3adbeeF", hex_digit)
+      ["d"]
   """
   @spec hex_digit() :: parser
   def hex_digit() do
@@ -486,9 +486,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("d3adbeeF", hex_digit |> hex_digit)
-  ["d", "3"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("d3adbeeF", hex_digit |> hex_digit)
+      ["d", "3"]
   """
   defcombinator hex_digit(parser)
 
@@ -497,9 +497,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("d3", alphanumeric)
-  ["d"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("d3", alphanumeric)
+      ["d"]
   """
   @spec alphanumeric() :: parser
   def alphanumeric() do
@@ -519,9 +519,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("d3", alphanumeric |> alphanumeric)
-  ["d", "3"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("d3", alphanumeric |> alphanumeric)
+      ["d", "3"]
   """
   defcombinator alphanumeric(parser)
 
@@ -530,9 +530,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi Paul", string("Hi"))
-  ["Hi"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi Paul", string("Hi"))
+      ["Hi"]
   """
   @spec string(String.t) :: parser
   def string(expected) do
@@ -555,9 +555,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi Paul", string("Hi") |> space |> string("Paul"))
-  ["Hi", " ", "Paul"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi Paul", string("Hi") |> space |> string("Paul"))
+      ["Hi", " ", "Paul"]
   """
   defcombinator string(parser, expected)
 
@@ -566,9 +566,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi, Paul", word)
-  ["Hi"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi, Paul", word)
+      ["Hi"]
   """
   @spec word() :: parser
   def word() do
@@ -607,9 +607,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("Hi Paul", word |> space |> word)
-  ["Hi", " ", "Paul"]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("Hi Paul", word |> space |> word)
+      ["Hi", " ", "Paul"]
   """
   defcombinator word(parser)
 
@@ -618,9 +618,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("1234, stuff", integer)
-  [1234]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("1234, stuff", integer)
+      [1234]
   """
   @spec integer() :: parser
   def integer() do
@@ -654,9 +654,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("stuff, 1234", word |> char(",") |> space |> integer)
-  ["stuff", ",", " ", 1234]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("stuff, 1234", word |> char(",") |> space |> integer)
+      ["stuff", ",", " ", 1234]
   """
   defcombinator integer(parser)
 
@@ -665,9 +665,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("1234.5, stuff", float)
-  [1234.5]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("1234.5, stuff", float)
+      [1234.5]
   """
   @spec float() :: parser
   def float() do
@@ -713,9 +713,9 @@ defmodule Combine.Parsers.Text do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> Combine.parse("float: 1234.5", word |> char(":") |> space |> float)
-  ["float", ":", " ", 1234.5]
+      iex> import #{__MODULE__}
+      ...> Combine.parse("float: 1234.5", word |> char(":") |> space |> float)
+      ["float", ":", " ", 1234.5]
   """
   defcombinator float(parser)
 

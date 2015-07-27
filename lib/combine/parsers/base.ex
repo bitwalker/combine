@@ -66,10 +66,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("  ", spaces |> eof)
-  [" "]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("  ", spaces |> eof)
+      [" "]
   """
   @spec eof() :: parser
   def eof() do
@@ -91,10 +91,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("1234", map(integer, &(&1 * 2)))
-  [2468]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("1234", map(integer, &(&1 * 2)))
+      [2468]
   """
   @spec map(parser, transform) :: parser
   def map(parser, transform) when is_function(parser, 1) and is_function(transform, 1) do
@@ -122,10 +122,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("Hi", option(integer) |> word)
-  [nil, "Hi"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("Hi", option(integer) |> word)
+      [nil, "Hi"]
   """
   @spec option(parser) :: parser
   def option(parser) when is_function(parser, 1) do
@@ -150,10 +150,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  iex> import Combine.Parsers.Text
-  ...> Combine.parse("1234", either(float, integer))
-  [1234]
+      iex> import #{__MODULE__}
+      iex> import Combine.Parsers.Text
+      ...> Combine.parse("1234", either(float, integer))
+      [1234]
   """
   @spec either(parser, parser) :: parser
   def either(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
@@ -182,10 +182,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  iex> import Combine.Parsers.Text
-  ...> Combine.parse("test", choice([float, integer, word]))
-  ["test"]
+      iex> import #{__MODULE__}
+      iex> import Combine.Parsers.Text
+      ...> Combine.parse("test", choice([float, integer, word]))
+      ["test"]
   """
   @spec choice([parser]) :: parser
   def choice(parsers) when is_list(parsers) do
@@ -211,10 +211,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("123", pipe([digit, digit, digit], fn digits -> {n, _} = Integer.parse(Enum.join(digits)); n end))
-  [123]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("123", pipe([digit, digit, digit], fn digits -> {n, _} = Integer.parse(Enum.join(digits)); n end))
+      [123]
   """
   @spec pipe([parser], transform) :: parser
   def pipe(parsers, transform) when is_list(parsers) and is_function(transform, 1) do
@@ -251,10 +251,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("123", sequence([digit, digit, digit]))
-  [[1, 2, 3]]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("123", sequence([digit, digit, digit]))
+      [[1, 2, 3]]
   """
   @spec sequence([parser]) :: parser
   def sequence(parsers) when is_list(parsers) do
@@ -273,11 +273,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> to_int = fn ("-", y) -> y * -1; (_, y) -> y end
-  ...> Combine.parse("1234-234", both(integer, both(char, integer, to_int), &(&1 + &2)))
-  [1000]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> to_int = fn ("-", y) -> y * -1; (_, y) -> y end
+      ...> Combine.parse("1234-234", both(integer, both(char, integer, to_int), &(&1 + &2)))
+      [1000]
   """
   @spec both(parser, parser, transform2) :: parser
   def both(parser1, parser2, transform)
@@ -295,10 +295,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("234-", pair_left(integer, char))
-  [234]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("234-", pair_left(integer, char))
+      [234]
   """
   @spec pair_left(parser, parser) :: parser
   def pair_left(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
@@ -315,10 +315,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("-234", pair_right(char, integer))
-  [234]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("-234", pair_right(char, integer))
+      [234]
   """
   @spec pair_right(parser, parser) :: parser
   def pair_right(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
@@ -335,10 +335,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("-234", pair_both(char, integer))
-  [{"-", 234}]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("-234", pair_both(char, integer))
+      [{"-", 234}]
   """
   @spec pair_both(parser, parser) :: parser
   def pair_both(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
@@ -356,10 +356,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("(234)", between(char("("), integer, char(")")))
-  [234]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("(234)", between(char("("), integer, char(")")))
+      [234]
   """
   @spec between(parser, parser, parser) :: parser
   def between(parser1, parser2, parser3)
@@ -377,10 +377,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("123", times(digit, 3))
-  [[1,2,3]]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("123", times(digit, 3))
+      [[1,2,3]]
   """
   @spec times(parser, pos_integer) :: parser
   def times(parser, n) when is_function(parser, 1) and is_integer(n) do
@@ -412,10 +412,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("abc", many1(char))
-  [["a", "b", "c"]]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("abc", many1(char))
+      [["a", "b", "c"]]
   """
   @spec many1(parser) :: parser
   def many1(parser) when is_function(parser, 1) do
@@ -442,12 +442,12 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("abc", many(char))
-  [["a", "b", "c"]]
-  ...> Combine.parse("", many(char))
-  [[]]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("abc", many(char))
+      [["a", "b", "c"]]
+      ...> Combine.parse("", many(char))
+      [[]]
   """
   @spec many(parser) :: parser
   def many(parser) when is_function(parser, 1) do
@@ -467,10 +467,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("1, 2, 3", sep_by1(digit, string(", ")))
-  [[1, 2, 3]]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("1, 2, 3", sep_by1(digit, string(", ")))
+      [[1, 2, 3]]
   """
   @spec sep_by1(parser, parser) :: parser
   def sep_by1(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
@@ -488,12 +488,12 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("1, 2, 3", sep_by(digit, string(", ")))
-  [[1, 2, 3]]
-  ...> Combine.parse("", sep_by(digit, string(", ")))
-  [[]]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("1, 2, 3", sep_by(digit, string(", ")))
+      [[1, 2, 3]]
+      ...> Combine.parse("", sep_by(digit, string(", ")))
+      [[]]
   """
   @spec sep_by(parser, parser) :: parser
   def sep_by(parser1, parser2) when is_function(parser1, 1) and is_function(parser2, 1) do
@@ -517,12 +517,12 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("   abc", skip(spaces) |> word)
-  ["abc"]
-  ...> Combine.parse("", skip(spaces))
-  []
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("   abc", skip(spaces) |> word)
+      ["abc"]
+      ...> Combine.parse("", skip(spaces))
+      []
   """
   @spec skip(parser) :: parser
   def skip(parser) when is_function(parser, 1) do
@@ -539,12 +539,12 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("   abc", skip_many(space) |> word)
-  ["abc"]
-  ...> Combine.parse("", skip_many(space))
-  []
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("   abc", skip_many(space) |> word)
+      ["abc"]
+      ...> Combine.parse("", skip_many(space))
+      []
   """
   @spec skip_many(parser) :: parser
   def skip_many(parser) when is_function(parser, 1) do
@@ -561,12 +561,12 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("   abc", skip_many1(space) |> word)
-  ["abc"]
-  ...> Combine.parse("", skip_many1(space))
-  {:error, "Expected space, but hit end of input."}
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("   abc", skip_many1(space) |> word)
+      ["abc"]
+      ...> Combine.parse("", skip_many1(space))
+      {:error, "Expected space, but hit end of input."}
   """
   @spec skip_many1(parser) :: parser
   def skip_many1(parser) when is_function(parser, 1) do
@@ -584,11 +584,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = ignore(char("h"))
-  ...> Combine.parse("h", parser)
-  []
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = ignore(char("h"))
+      ...> Combine.parse("h", parser)
+      []
   """
   @spec ignore(parser) :: parser
   def ignore(parser) when is_function(parser, 1) do
@@ -608,11 +608,11 @@ defmodule Combine.Parsers.Base do
   semantics of ignore/1. If either fail, the whole parser fails.
 
   # Example
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = char("h") |> char("i") |> ignore(space) |> char("!")
-  ...> Combine.parse("hi !", parser)
-  ["h", "i", "!"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = char("h") |> char("i") |> ignore(space) |> char("!")
+      ...> Combine.parse("hi !", parser)
+      ["h", "i", "!"]
   """
   defcombinator ignore(parser1, parser2)
 
@@ -623,11 +623,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = satisfy(char, fn x -> x == "H" end)
-  ...> Combine.parse("Hi", parser)
-  ["H"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = satisfy(char, fn x -> x == "H" end)
+      ...> Combine.parse("Hi", parser)
+      ["H"]
   """
   @spec satisfy(parser, predicate) :: parser
   def satisfy(parser, predicate) when is_function(parser, 1) and is_function(predicate, 1) do
@@ -652,11 +652,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = char("H") |> satisfy(char, fn x -> x == "i" end)
-  ...> Combine.parse("Hi", parser)
-  ["H", "i"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = char("H") |> satisfy(char, fn x -> x == "i" end)
+      ...> Combine.parse("Hi", parser)
+      ["H", "i"]
   """
   defcombinator satisfy(parser1, parser2, predicate)
 
@@ -665,11 +665,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = one_of(char, ?a..?z |> Enum.map(&(<<&1::utf8>>)))
-  ...> Combine.parse("abc", parser)
-  ["a"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = one_of(char, ?a..?z |> Enum.map(&(<<&1::utf8>>)))
+      ...> Combine.parse("abc", parser)
+      ["a"]
   """
   @spec one_of(parser, Range.t | list()) :: parser
   def one_of(parser, %Range{} = items), do: one_of(parser, items |> Enum.to_list)
@@ -697,11 +697,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = upper |> one_of(char, ["i", "I"])
-  ...> Combine.parse("Hi", parser)
-  ["H", "i"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = upper |> one_of(char, ["i", "I"])
+      ...> Combine.parse("Hi", parser)
+      ["H", "i"]
   """
   def one_of(parser1, parser2, %Range{} = items), do: one_of(parser1, parser2, items |> Enum.to_list)
   defcombinator one_of(parser1, parser2, items)
@@ -711,11 +711,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = none_of(char, ?a..?z |> Enum.map(&(<<&1::utf8>>)))
-  ...> Combine.parse("ABC", parser)
-  ["A"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = none_of(char, ?a..?z |> Enum.map(&(<<&1::utf8>>)))
+      ...> Combine.parse("ABC", parser)
+      ["A"]
   """
   def none_of(parser, %Range{} = items), do: none_of(parser, items |> Enum.to_list)
   def none_of(parser, items) when is_function(parser, 1) and is_list(items) do
@@ -742,11 +742,11 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> parser = upper |> none_of(char, ["i", "I"])
-  ...> Combine.parse("Hello", parser)
-  ["H", "e"]
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = upper |> none_of(char, ["i", "I"])
+      ...> Combine.parse("Hello", parser)
+      ["H", "e"]
   """
   def none_of(parser1, parser2, %Range{} = items), do: none_of(parser1, parser2, items |> Enum.to_list)
   defcombinator none_of(parser1, parser2, items)
@@ -756,10 +756,10 @@ defmodule Combine.Parsers.Base do
 
   # Example
 
-  iex> import #{__MODULE__}
-  ...> import Combine.Parsers.Text
-  ...> Combine.parse("abc", label(integer, "year"))
-  {:error, "Expected `year` at line 1, column 1."}
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("abc", label(integer, "year"))
+      {:error, "Expected `year` at line 1, column 1."}
   """
   @spec label(parser, String.t) :: parser
   def label(parser, name) when is_function(parser, 1) do

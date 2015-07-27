@@ -1,5 +1,7 @@
 defmodule Combine do
-  @moduledoc false
+  @moduledoc """
+  Main entry point for the Combine API.
+  """
   alias Combine.ParserState
 
   @type parser :: Combine.Parsers.Base.parser
