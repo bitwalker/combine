@@ -623,31 +623,7 @@ defmodule Combine.Parsers.Text do
       [1234]
   """
   @spec integer() :: parser
-  def integer() do
-    fn
-      %ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
-        case String.next_codepoint(input) do
-          {cp, rest} when cp in @digits ->
-            int_str   = extract_integer(rest, cp)
-            {int, _}  = Integer.parse(int_str)
-            int_len   = String.length(int_str)
-            {_, rest} = String.split_at(input, int_len)
-            %{state | :column => col + int_len, :input => rest, results: [int|results]}
-          {cp, _} ->
-            %{state | :status => :error, :error => "Expected integer but found `#{cp}` at line #{line}, column #{col + 1}"}
-          nil ->
-            %{state | :status => :error, :error => "Expected integer, but hit end of input."}
-        end
-      %ParserState{} = state -> state
-    end
-  end
-  defp extract_integer(<<>>, acc), do: acc
-  defp extract_integer(input, acc) do
-    case String.next_codepoint(input) do
-      {cp, rest} when cp in @digits -> extract_integer(rest, acc <> cp)
-      _ -> acc
-    end
-  end
+  def integer(), do: fixed_integer(-1)
 
   @doc """
   Same as integer/0, but acts as a combinator.
@@ -659,6 +635,63 @@ defmodule Combine.Parsers.Text do
       ["stuff", ",", " ", 1234]
   """
   defcombinator integer(parser)
+
+  @doc """
+  Parses an integer value from the input with a fixed width
+
+  # Example
+
+      iex> import #{__MODULE__}
+      ...> Combine.parse("123, stuff", fixed_integer(3))
+      [123]
+  """
+  @spec fixed_integer(pos_integer) :: parser
+  def fixed_integer(size) do
+    fn
+      %ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
+        case String.next_codepoint(input) do
+          {cp, rest} when cp in @digits ->
+            case extract_integer(rest, cp, size - 1) do
+              {:error, :eof} ->
+                %{state | :status => :error, :error => "Expected #{size}-digit integer, but hit end of input."}
+              {:error, :badmatch, remaining} ->
+                %{state | :status => :error, :error => "Expected #{size}-digit integer, but found only #{size-remaining} digits."}
+              {:ok, int_str} ->
+                {int, _}  = Integer.parse(int_str)
+                int_len   = String.length(int_str)
+                {_, rest} = String.split_at(input, int_len)
+                %{state | :column => col + int_len, :input => rest, results: [int|results]}
+            end
+          {cp, _} ->
+            %{state | :status => :error, :error => "Expected integer but found `#{cp}` at line #{line}, column #{col + 1}"}
+          nil ->
+            %{state | :status => :error, :error => "Expected integer, but hit end of input."}
+        end
+      %ParserState{} = state -> state
+    end
+  end
+  defp extract_integer(<<>>, acc, size) when size <= 0, do: {:ok, acc}
+  defp extract_integer(<<>>, _acc, _size), do: {:error, :eof}
+  defp extract_integer(input, acc, size) do
+    case String.next_codepoint(input) do
+      {cp, rest} when cp in @digits and size > 0 -> extract_integer(rest, acc <> cp, size - 1)
+      {cp, rest} when cp in @digits and size < 0 -> extract_integer(rest, acc <> cp, size)
+      {cp, _} when cp in @digits -> {:ok, acc}
+      _ when size > 0 -> {:error, :badmatch, size}
+      _               -> {:ok, acc}
+    end
+  end
+
+  @doc """
+  Parses an integer value from the input with a fixed width
+
+  # Example
+
+      iex> import #{__MODULE__}
+      ...> Combine.parse(":1234", char |> fixed_integer(3))
+      [":", 123]
+  """
+  defcombinator fixed_integer(parser, size)
 
   @doc """
   Parses a floating point number from the input.
