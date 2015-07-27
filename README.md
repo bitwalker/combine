@@ -31,8 +31,9 @@ iex> import Combine.Parsers.Base
 Combine is a superset of ExParsec's API for the most part (sans binary parsers at the moment),
 and it's performance is significantly better in the one benchmark I've run with a very simple
 parser. Benchfella was used to run the benchmarks, and the benchmarks used for comparison are
-present in both Combine and ExParsec's `bench` directories. For reference, here's what I'm seeing
-by replicating the one benchmark contained in ExParsec's repository:
+present in both Combine and ExParsec's `bench` directories with the exception of the datetime
+parsing one, which is easily replicated in ExParsec if you wish to double check yourself.
+For reference, here's what I'm seeing on my machine:
 
 ```
 # ExParsec
@@ -51,7 +52,8 @@ Finished in 5.67 seconds
 many bits            1000   1731.83 µs/op
 
 ## Bench.ExParsec.Text
-many any_char        5000   586.07 µs/op
+many any_char                  5000   616.02 µs/op
+parse ISO 8601 datetime        2000   964.48 µs/op
 
 # Combine
 
@@ -64,7 +66,8 @@ Settings:
 Finished in 2.98 seconds
 
 ## Combine.Bench
-many any_char      100000   26.56 µs/op
+many any_char                100000   25.32 µs/op
+parse ISO 8601 datetime       10000   124.89 µs/op
 ```
 
 ExParsec also appears to be falling behind on maintenace, even with PRs being submitted,
