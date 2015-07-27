@@ -1,8 +1,9 @@
 defmodule Combine.ParserState do
+  @moduledoc false
   defstruct input: <<>>,
             column: 0,
             line: 1,
             results: [],
-            status: :ok, # :eof, :error, :fatal
+            status: :ok, # :error
             error: nil
 end
