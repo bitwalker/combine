@@ -121,7 +121,7 @@ zero
 ```
 alphanumeric      bin_digit
 char              digit
-float             hex_digit
+float             fixed_integer
 hex_digit         integer
 letter            lower
 newline           octal_digit
