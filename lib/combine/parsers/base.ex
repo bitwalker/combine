@@ -682,7 +682,7 @@ defmodule Combine.Parsers.Base do
               h in items ->
                 s
               true ->
-                stringified = Enum.join(", ", items)
+                stringified = Enum.join(items, ", ")
                 %{s | :status => :error, :error => "Expected one of [#{stringified}], but found `#{h}`, at line #{line}, column #{col}"}
             end
           %ParserState{} = s -> s
@@ -725,7 +725,7 @@ defmodule Combine.Parsers.Base do
           %ParserState{status: :ok, results: [h|_]} = s ->
             cond do
               h in items ->
-                stringified = Enum.join(", ", items)
+                stringified = Enum.join(items, ", ")
                 %{s | :status => :error, :error => "Expected none of [#{stringified}], but found `#{h}`, at line #{line}, column #{col}"}
               true ->
                 s
