@@ -670,15 +670,17 @@ defmodule Combine.Parsers.Text do
       %ParserState{} = state -> state
     end
   end
-  defp extract_integer(<<>>, acc, size) when size <= 0, do: {:ok, acc}
+  defp extract_integer(<<>>, acc, 0), do: {:ok, acc}
+  defp extract_integer(<<>>, acc, size) when size < 0, do: {:ok, acc}
   defp extract_integer(<<>>, _acc, _size), do: {:error, :eof}
+  defp extract_integer(_input, acc, 0), do: {:ok, acc}
   defp extract_integer(input, acc, size) do
     case String.next_codepoint(input) do
       {cp, rest} when cp in @digits and size > 0 -> extract_integer(rest, acc <> cp, size - 1)
       {cp, rest} when cp in @digits and size < 0 -> extract_integer(rest, acc <> cp, size)
-      {cp, _} when cp in @digits -> {:ok, acc}
-      _ when size > 0 -> {:error, :badmatch, size}
-      _               -> {:ok, acc}
+      _ when size == 0 -> {:ok, acc}
+      _ when size > 0  -> {:error, :badmatch, size}
+      _                -> {:ok, acc}
     end
   end
 
