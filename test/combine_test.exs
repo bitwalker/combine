@@ -33,4 +33,12 @@ defmodule CombineTest do
     assert [2014, 7, 22, 12, 30, 5.0002, "UTC"] = Combine.parse(@datetime, parser)
     assert [2014, 7, 22, 12, 30, 5.0002, "+0200"] = Combine.parse(@datetime_zoned, parser)
   end
+
+  test "piping with ignore should accumulate results properly" do
+    parser = pipe([either(char("-"), char("+")), digit, digit, ignore(char(":")), digit, digit], &Enum.join/1)
+             |> pipe([either(char("-"), char("+")), digit, digit, digit, digit], &Enum.join/1)
+
+    assert ["+0230", "-0400"] = Combine.parse("+02:30-0400", parser)
+    assert ["-0230", "+0400"] = Combine.parse("-02:30+0400", parser)
+  end
 end

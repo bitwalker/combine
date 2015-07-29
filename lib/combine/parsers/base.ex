@@ -221,9 +221,13 @@ defmodule Combine.Parsers.Base do
     fn
       %ParserState{status: :ok, results: initial_results} = state ->
         {num_parsers, s} = Enum.reduce(parsers, {0, state}, fn
-          (parser, {n, %ParserState{status: :ok} = s}) ->
+          (parser, {n, %ParserState{status: :ok, results: r_last} = s}) ->
             case parser.(s) do
-              %ParserState{status: :ok} = ps -> {n+1, ps}
+              %ParserState{status: :ok, results: r} = ps ->
+                case {Enum.count(r_last), Enum.count(r)} do
+                  {x, x} -> {n, ps}
+                  _      -> {n+1, ps}
+                end
               %ParserState{} = ps -> {n, ps}
             end
           (_parser, res) -> res
