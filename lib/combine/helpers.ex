@@ -16,7 +16,7 @@ defmodule Combine.Helpers do
           %Combine.ParserState{status: :ok} = state ->
             case unquote(params).(state) do
               %Combine.ParserState{status: :ok} = s -> unquote(name)().(s)
-              %Combine.ParserState{} = s            -> s
+              %Combine.ParserState{} = s -> s
             end
           %Combine.ParserState{} = state -> state
         end
@@ -34,7 +34,7 @@ defmodule Combine.Helpers do
             case unquote(parser1).(state) do
               %Combine.ParserState{status: :ok} = s ->
                 apply(unquote(__CALLER__.module), unquote(name), unquote(rest_args)).(s)
-              %Combine.ParserState{} = s            -> s
+              %Combine.ParserState{} = s -> s
             end
           %Combine.ParserState{} = state -> state
         end
