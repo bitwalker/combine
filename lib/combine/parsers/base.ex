@@ -263,6 +263,13 @@ defmodule Combine.Parsers.Base do
 
   @doc """
   Same as sequence/1, but acts as a combinator.
+
+  # Example
+
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> Combine.parse("123-234", sequence([integer, char]) |> map(sequence([integer]), fn [x] -> x * 2 end))
+      [[123, "-"], 468]
   """
   defcombinator sequence(parser, parsers)
 
