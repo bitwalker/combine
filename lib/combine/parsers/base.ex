@@ -165,7 +165,7 @@ defmodule Combine.Parsers.Base do
             case parser2.(state) do
               %ParserState{status: :ok} = s2 -> s2
               %ParserState{error: error2} ->
-                %{state | :status => :error, :error => "Expected one of two parsers to succeed, but both failed:\n\t#{error1}\n\t#{error2}"}
+                %{state | :status => :error, :error => "#{error1}, or: #{error2}"}
             end
         end
       %ParserState{} = state -> state
