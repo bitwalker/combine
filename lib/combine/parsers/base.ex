@@ -201,7 +201,7 @@ defmodule Combine.Parsers.Base do
     end
   end
   def do_choice([], %ParserState{line: line, column: col} = state, :next) do
-    %{state | :status => :error, :reason => "Expected at least one parser to succeed at line #{line}, column #{col}."}
+    %{state | :status => :error, :error => "Expected at least one parser to succeed at line #{line}, column #{col}."}
   end
   def do_choice([parser|rest], state, :next) do
     case parser.(state) do
