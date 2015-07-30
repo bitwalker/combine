@@ -128,6 +128,7 @@ newline           octal_digit
 space             spaces
 string            tab
 upper             word
+word_of
 ```
 
 ## Roadmap

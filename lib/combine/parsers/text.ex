@@ -18,7 +18,6 @@ defmodule Combine.Parsers.Text do
   @hex_alpha_up  ?A..?F |> Enum.map(&(<<&1::utf8>>))
   @hex_alpha     @hex_alpha_low ++ @hex_alpha_up
   @hexadecimal   @digits ++ @hex_alpha
-  @non_word_char ~r/\W/
 
   @doc """
   This parser parses a single valid character from the input.
@@ -562,7 +561,7 @@ defmodule Combine.Parsers.Text do
   defcombinator string(parser, expected)
 
   @doc """
-  Parses a string consisting of non-word characters from the input.
+  Parses a string consisting of word characters from the input.
 
   # Example
 
@@ -571,36 +570,7 @@ defmodule Combine.Parsers.Text do
       ["Hi"]
   """
   @spec word() :: parser
-  def word() do
-    fn
-      %ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
-        case String.next_codepoint(input) do
-          {cp, rest} ->
-            if Regex.match?(@non_word_char, cp) do
-              %{state | :status => :error, :error => "Expected word but found whitespace at line #{line}, column #{col + 1}"}
-            else
-              whole_word = extract_word(rest, cp)
-              word_len   = String.length(whole_word)
-              {_, rest}  = String.split_at(input, word_len)
-              %{state | :column => col + word_len, :input => rest, results: [whole_word|results]}
-            end
-          nil -> %{state | :status => :error, :error => "Expected word, but hit end of input."}
-        end
-      %ParserState{} = state -> state
-    end
-  end
-  defp extract_word(<<>>, acc), do: acc
-  defp extract_word(input, acc) do
-    case String.next_codepoint(input) do
-      {cp, rest} ->
-        if Regex.match?(@non_word_char, cp) do
-          acc
-        else
-          extract_word(rest, acc <> cp)
-        end
-      nil -> acc
-    end
-  end
+  def word(), do: word_of(~r/\w/)
 
   @doc """
   Same as word/0, but acts as a combinator
@@ -612,6 +582,53 @@ defmodule Combine.Parsers.Text do
       ["Hi", " ", "Paul"]
   """
   defcombinator word(parser)
+
+  @doc """
+  Parses a string where each character matches the provided regular expression.
+
+  # Example
+
+      iex> import #{__MODULE__}
+      ...> valid_chars = ~r/[!:_\\-\\w]/
+      ...> Combine.parse("something_with-special:characters!", word_of(valid_chars))
+      ["something_with-special:characters!"]
+  """
+  @spec word_of(Regex.t) :: parser
+  def word_of(pattern) do
+    fn
+      %ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
+        case String.next_codepoint(input) do
+          {cp, rest} ->
+            unless Regex.match?(pattern, cp) do
+              %{state | :status => :error, :error => "Expected word but found whitespace at line #{line}, column #{col + 1}"}
+            else
+              whole_word = extract_word(rest, cp, pattern)
+              word_len   = String.length(whole_word)
+              {_, rest}  = String.split_at(input, word_len)
+              %{state | :column => col + word_len, :input => rest, results: [whole_word|results]}
+            end
+          nil -> %{state | :status => :error, :error => "Expected word, but hit end of input."}
+        end
+      %ParserState{} = state -> state
+    end
+  end
+  defp extract_word(<<>>, acc, _), do: acc
+  defp extract_word(input, acc, pattern) do
+    case String.next_codepoint(input) do
+      {cp, rest} ->
+        unless Regex.match?(pattern, cp) do
+          acc
+        else
+          extract_word(rest, acc <> cp, pattern)
+        end
+      nil -> acc
+    end
+  end
+
+  @doc """
+  Same as word_of/1, but acts as a combinator.
+  """
+  defcombinator word_of(parser, pattern)
 
   @doc """
   Parses an integer value from the input.
