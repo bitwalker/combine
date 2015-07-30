@@ -87,7 +87,9 @@ defmodule Combine.Parsers.Base do
   defcombinator eof(parser)
 
   @doc """
-  Applies a transformation function to the result of the given parser.
+  Applies a transformation function to the result of the given parser. If the
+  result returned is of the form `{:error, reason}`, the parser will fail with
+  that reason.
 
   # Example
 
@@ -102,8 +104,12 @@ defmodule Combine.Parsers.Base do
       %ParserState{status: :ok} = state ->
         case parser.(state) do
           %ParserState{status: :ok, results: [h|rest]} = s ->
-            result = transform.(h)
-            %{s | :results => [result|rest]}
+            case transform.(h) do
+              {:error, reason} ->
+                %{s | :status => :error, :error => reason}
+              result ->
+                %{s | :results => [result|rest]}
+            end
           %ParserState{} = s ->
             s
         end
