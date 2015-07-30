@@ -196,13 +196,17 @@ defmodule Combine.Parsers.Base do
   @spec choice([parser]) :: parser
   def choice(parsers) when is_list(parsers) do
     fn
-      %ParserState{status: :ok} = state ->
-        chooser = Enum.reduce(parsers, nil, fn
-          (parser, nil)  -> parser
-          (parser, last) -> either(last, parser)
-        end)
-        chooser.(state)
-      %ParserState{} = state -> state
+      %ParserState{status: :ok} = state -> do_choice(parsers, state, :next)
+      %ParserState{} = state            -> state
+    end
+  end
+  def do_choice([], %ParserState{line: line, column: col} = state, :next) do
+    %{state | :status => :error, :reason => "Expected at least one parser to succeed at line #{line}, column #{col}."}
+  end
+  def do_choice([parser|rest], state, :next) do
+    case parser.(state) do
+      %ParserState{status: :ok} = state -> state
+      _ -> do_choice(rest, state, :next)
     end
   end
 
