@@ -19,4 +19,21 @@ defmodule Combine do
     end
   end
 
+  @doc """
+  Given a file path and a parser, applies the parser to the file located at that
+  path, and returns the results as a lsit, or an error tuple if an error occurs.
+  """
+  @spec parse_file(String.t, parser) :: [term] | {:error, term}
+  def parse_file(path, parser) do
+    case File.read(path) do
+      {:ok, contents} ->
+        case parser.(%ParserState{input: contents}) do
+          %ParserState{status: :ok, results: res} -> Enum.reverse(res)
+          %ParserState{error: res}                -> {:error, res}
+          x                                       -> {:error, {:fatal, x}}
+        end
+      {:error, _} = err -> err
+    end
+  end
+
 end

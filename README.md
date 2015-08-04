@@ -147,7 +147,6 @@ uint
 
 ## Roadmap
 
-- `Combine.parse_file/1`
 - Streaming parsers
 
 ## License
