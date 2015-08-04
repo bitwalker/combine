@@ -3,13 +3,19 @@ defmodule Combine.Bench do
 
     import Combine.Parsers.Base
     import Combine.Parsers.Text
+    import Combine.Parsers.Binary
 
     @chars "sdfgjakghvnlkasjlghavsdjlkfhgvaskljmtvmslkdgfdaskl"
+    @bytes <<43, 63, 54, 134, 43, 64, 78, 43, 254, 65, 124, 186, 43, 56>>
     @datetime "2014-07-22T12:30:05.0002Z"
     @datetime_zoned "2014-07-22T12:30:05.0002+0200"
 
     bench "many any_char" do
       Combine.parse(@chars, many(char))
+    end
+
+    bench "many bits" do
+      Combine.parse(@bytes, many(bits(1)))
     end
 
     bench "parse ISO 8601 datetime" do

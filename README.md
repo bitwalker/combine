@@ -47,12 +47,11 @@ iex> import Combine.Parsers.Base
 
 ## Why Combine vs ExParsec?
 
-Combine is a superset of ExParsec's API for the most part (sans binary parsers at the moment),
-and it's performance is significantly better in the one benchmark I've run with a very simple
-parser. Benchfella was used to run the benchmarks, and the benchmarks used for comparison are
-present in both Combine and ExParsec's `bench` directories with the exception of the datetime
-parsing one, which is easily replicated in ExParsec if you wish to double check yourself.
-For reference, here's what I'm seeing on my machine:
+Combine is a superset of ExParsec's API for the most part and it's performance is significantly
+better in the one benchmark I've run with a very simple parser. Benchfella was used to run the
+benchmarks, and the benchmarks used for comparison are present in both Combine and ExParsec's
+`bench` directories with the exception of the datetime parsing one, which is easily replicated
+in ExParsec if you wish to double check yourself. For reference, here's what I'm seeing on my machine:
 
 ```
 # ExParsec
@@ -80,13 +79,20 @@ Settings:
   duration:      1.0 s
 
 ## Combine.Bench
-[18:56:42] 1/1: many any_char
+[15:21:21] 1/5: parse ISO 8601 datetime
+[15:21:22] 2/5: many bits
+[15:21:25] 3/5: many any_char
+[15:21:27] 4/5: large set of choices (one_of/word)
+[15:21:30] 5/5: large set of choices (choice/parsers)
 
-Finished in 2.98 seconds
+Finished in 12.08 seconds
 
 ## Combine.Bench
-many any_char                100000   25.32 µs/op
-parse ISO 8601 datetime       10000   124.89 µs/op
+large set of choices (one_of/word)         100000   25.60 µs/op
+many any_char                               50000   32.98 µs/op
+many bits                                   50000   43.90 µs/op
+parse ISO 8601 datetime                     10000   139.45 µs/op
+large set of choices (choice/parsers)       10000   265.04 µs/op
 ```
 
 ExParsec also appears to be falling behind on maintenace, even with PRs being submitted,
@@ -131,9 +137,16 @@ upper             word
 word_of
 ```
 
+### Combine.Parsers.Binary
+--------
+```
+bits       bytes
+float      int
+uint
+```
+
 ## Roadmap
 
-- Binary parsers
 - `Combine.parse_file/1`
 - Streaming parsers
 
