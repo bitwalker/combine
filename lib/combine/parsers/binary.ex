@@ -21,23 +21,14 @@ defmodule Combine.Parsers.Binary do
       ["H"]
   """
   @spec bits(pos_integer) :: parser
-  def bits(n) do
-    fn
-      %ParserState{status: :ok, line: _line, column: col, input: input, results: results} = state ->
-        case input do
-          <<bits::bitstring-size(n), rest::bitstring>> ->
-            %{state | :column => col + n, :input => rest, :results => [bits|results]}
-          _ ->
-            %{state | :status => :error, :error => "Expected #{n} bits starting at position #{col + 1}, but encountered end of input."}
-        end
-      %ParserState{} = state -> state
+  defparser bits(%ParserState{status: :ok, column: col, input: input, results: results} = state, n) do
+    case input do
+      <<bits::bitstring-size(n), rest::bitstring>> ->
+        %{state | :column => col + n, :input => rest, :results => [bits|results]}
+      _ ->
+        %{state | :status => :error, :error => "Expected #{n} bits starting at position #{col + 1}, but encountered end of input."}
     end
   end
-
-  @doc """
-  Same as bits/1, but acts as a combinator.
-  """
-  defcombinator bits(parser, n)
 
   @doc """
   This parser parses N bytes from the input.
@@ -49,12 +40,15 @@ defmodule Combine.Parsers.Binary do
       ["H"]
   """
   @spec bytes(pos_integer) :: parser
-  def bytes(n), do: bits(n * 8)
-
-  @doc """
-  Same as bytes/1, but acts as a combinator.
-  """
-  defcombinator bytes(parser, n)
+  defparser bytes(%ParserState{status: :ok, column: col, input: input, results: results} = state, n) do
+    bits_size = n * 8
+    case input do
+      <<bits::bitstring-size(bits_size), rest::bitstring>> ->
+        %{state | :column => col + bits_size, :input => rest, :results => [bits|results]}
+      _ ->
+        %{state | :status => :error, :error => "Expected #{n} bytes starting at position #{col + 1}, but encountered end of input."}
+    end
+  end
 
   @doc """
   This parser parses an unsigned, n-bit integer from the input with the given
@@ -67,33 +61,24 @@ defmodule Combine.Parsers.Binary do
       [85]
   """
   @spec uint(pos_integer, :be | :le) :: parser
-  def uint(size, endianness) do
-    fn
-      %ParserState{status: :ok, line: _line, column: col, input: input, results: results} = state ->
-        case endianness do
-          :be ->
-            case input do
-              <<int::big-unsigned-size(size), rest::bitstring>> ->
-                %{state | :column => col + size, :input => rest, :results => [int|results]}
-              _ ->
-                %{state | :status => :error, :error => "Expected #{size}-bit, unsigned, big-endian integer starting at position #{col + 1}."}
-            end
-          :le ->
-            case input do
-              <<int::little-unsigned-size(size), rest::bitstring>> ->
-                %{state | :column => col + size, :input => rest, :results => [int|results]}
-              _ ->
-                %{state | :status => :error, :error => "Expected #{size}-bit, unsigned, little-endian integer starting at position #{col + 1}."}
-            end
+  defparser uint(%ParserState{status: :ok, column: col, input: input, results: results} = state, size, endianness) do
+    case endianness do
+      :be ->
+        case input do
+          <<int::big-unsigned-size(size), rest::bitstring>> ->
+            %{state | :column => col + size, :input => rest, :results => [int|results]}
+          _ ->
+            %{state | :status => :error, :error => "Expected #{size}-bit, unsigned, big-endian integer starting at position #{col + 1}."}
         end
-      %ParserState{} = state -> state
+      :le ->
+        case input do
+          <<int::little-unsigned-size(size), rest::bitstring>> ->
+            %{state | :column => col + size, :input => rest, :results => [int|results]}
+          _ ->
+            %{state | :status => :error, :error => "Expected #{size}-bit, unsigned, little-endian integer starting at position #{col + 1}."}
+        end
     end
   end
-
-  @doc """
-  Same as uint/2, but acts as a combinator.
-  """
-  defcombinator uint(parser, size, endianness)
 
   @doc """
   This parser parses a signed, n-bit integer from the input with the given

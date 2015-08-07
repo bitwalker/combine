@@ -29,19 +29,26 @@ defmodule Combine.Parsers.Text do
       ["H"]
   """
   @spec char() :: parser
-  def char() do
-    fn
-      %ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
-        case String.next_codepoint(input) do
-          {cp, rest} ->
-            if String.valid_character?(cp) do
-              %{state | :column => col + 1, :input => rest, :results => [cp|results]}
-            else
-              %{state | :status => :error, :error => "Encountered invalid character `#{cp}` at line #{line}, column #{col + 1}."}
-            end
-          nil        -> %{state | :status => :error, :error => "Expected any character, but hit end of input."}
+  defparser char(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
+    case String.next_codepoint(input) do
+      {cp, rest} ->
+        if String.valid_character?(cp) do
+          %{state | :column => col + 1, :input => rest, :results => [cp|results]}
+        else
+          %{state | :status => :error, :error => "Encountered invalid character `#{cp}` at line #{line}, column #{col + 1}."}
         end
-      %ParserState{} = state -> state
+      nil -> %{state | :status => :error, :error => "Expected any character, but hit end of input."}
+    end
+  end
+
+  defparser char(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state, c) do
+    unless is_binary(c) && String.valid_character?(c) do
+      raise(ArgumentError, message: "The char parser must be given a valid character string, but was given `#{c}`")
+    end
+    case String.next_codepoint(input) do
+      {^c, rest} -> %{state | :column => col + 1, :input => rest, :results => [c|results]}
+      {cp, _}    -> %{state | :status => :error, :error => "Expected `#{c}`, but found `#{cp}` at line #{line}, column #{col + 1}."}
+      nil        -> %{state | :status => :error, :error => "Expected `#{c}`, but hit end of input."}
     end
   end
 
@@ -55,22 +62,22 @@ defmodule Combine.Parsers.Text do
       ...> Combine.parse("Hi!", parser)
       ["H"]
   """
-  @spec char(String.t) :: parser
-  def char(c) when is_binary(c) do
-    unless String.valid_character?(c) do
-      raise(ArgumentError, message: "The char parser must be given a valid character string, but was given `#{c}`")
-    end
-
-    fn
-      %ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
-        case String.next_codepoint(input) do
-          {^c, rest} -> %{state | :column => col + 1, :input => rest, :results => [c|results]}
-          {cp, _}    -> %{state | :status => :error, :error => "Expected `#{c}`, but found `#{cp}` at line #{line}, column #{col + 1}."}
-          nil        -> %{state | :status => :error, :error => "Expected `#{c}`, but hit end of input."}
-        end
-      %ParserState{} = state -> state
-    end
-  end
+  #@spec char(String.t) :: parser
+  #def char(c) when is_binary(c) do
+    #unless String.valid_character?(c) do
+      #raise(ArgumentError, message: "The char parser must be given a valid character string, but was given `#{c}`")
+    #end
+#
+    #fn
+      #%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state ->
+        #case String.next_codepoint(input) do
+          #{^c, rest} -> %{state | :column => col + 1, :input => rest, :results => [c|results]}
+          #{cp, _}    -> %{state | :status => :error, :error => "Expected `#{c}`, but found `#{cp}` at line #{line}, column #{col + 1}."}
+          #nil        -> %{state | :status => :error, :error => "Expected `#{c}`, but hit end of input."}
+        #end
+      #%ParserState{} = state -> state
+    #end
+  #end
 
   @doc """
   Parses any letter in the English alphabet (A..Z or a..z).
@@ -115,22 +122,23 @@ defmodule Combine.Parsers.Text do
       ...> Combine.parse("Hi!", parser)
       ["H", "i", "!"]
   """
-  @spec char(parser, String.t) :: parser
-  def char(parser, c \\ nil) when is_function(parser, 1) do
-    fn
-      %ParserState{status: :ok} = state ->
-        case parser.(state) do
-          %ParserState{status: :ok} = s ->
-            if c == nil do
-              char().(s)
-            else
-              char(c).(s)
-            end
-          %ParserState{} = s -> s
-        end
-      %ParserState{} = state -> state
-    end
-  end
+  #@spec char(parser, String.t) :: parser
+  #def char(parser, c \\ nil) when is_function(parser, 1) do
+    #fn
+      #%ParserState{status: :ok} = state ->
+        #case parser.(state) do
+          #%ParserState{status: :ok} = s ->
+            #if c == nil do
+              #do_char(s)
+              ##char().(s)
+            #else
+              #do_char(s, c)
+            #end
+          #%ParserState{} = s -> s
+        #end
+      #%ParserState{} = state -> state
+    #end
+  #end
 
   @doc """
   Parses any upper case character.

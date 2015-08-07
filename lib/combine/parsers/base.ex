@@ -99,28 +99,16 @@ defmodule Combine.Parsers.Base do
       [2468]
   """
   @spec map(parser, transform) :: parser
-  def map(parser, transform) when is_function(parser, 1) and is_function(transform, 1) do
-    fn
-      %ParserState{status: :ok} = state ->
-        case parser.(state) do
-          %ParserState{status: :ok, results: [h|rest]} = s ->
-            case transform.(h) do
-              {:error, reason} ->
-                %{s | :status => :error, :error => reason}
-              result ->
-                %{s | :results => [result|rest]}
-            end
-          %ParserState{} = s ->
-            s
+  defparser map(%ParserState{status: :ok} = state, parser, transform) do
+    case parser.(state) do
+      %ParserState{status: :ok, results: [h|rest]} = s ->
+        case transform.(h) do
+          {:error, reason} -> %{s | :status => :error, :error => reason}
+          result -> %{s | :results => [result|rest]}
         end
-      %ParserState{} = state -> state
+      s -> s
     end
   end
-
-  @doc """
-  Same as map/2, but acts as a combinator.
-  """
-  defcombinator map(parser1, parser2, transform)
 
   @doc """
   Applies parser if possible. Returns the parse result if successful
@@ -194,26 +182,16 @@ defmodule Combine.Parsers.Base do
       ["test"]
   """
   @spec choice([parser]) :: parser
-  def choice(parsers) when is_list(parsers) do
-    fn
-      %ParserState{status: :ok} = state -> do_choice(parsers, state, :next)
-      %ParserState{} = state            -> state
-    end
+  defparser choice(%ParserState{status: :ok} = state, parsers) do
+    try_choice(parsers, state, nil)
   end
-  def do_choice([], %ParserState{line: line, column: col} = state, :next) do
+  defp try_choice([parser|rest], state, nil),                             do: try_choice(rest, state, parser.(state))
+  defp try_choice([_|_], _, %ParserState{status: :ok} = success),         do: success
+  defp try_choice([parser|rest], state, %ParserState{}),                  do: try_choice(rest, state, parser.(state))
+  defp try_choice([], _, %ParserState{status: :ok} = success),            do: success
+  defp try_choice([], %ParserState{line: line, column: col} = state, _) do
     %{state | :status => :error, :error => "Expected at least one parser to succeed at line #{line}, column #{col}."}
   end
-  def do_choice([parser|rest], state, :next) do
-    case parser.(state) do
-      %ParserState{status: :ok} = state -> state
-      _ -> do_choice(rest, state, :next)
-    end
-  end
-
-  @doc """
-  Same as choice/1, but acts as a combinator.
-  """
-  defcombinator choice(parser, parsers)
 
   @doc """
   Applies each parser in `parsers`, then sends the results to the provided function
@@ -230,25 +208,21 @@ defmodule Combine.Parsers.Base do
   def pipe(parsers, transform) when is_list(parsers) and is_function(transform, 1) do
     fn
       %ParserState{status: :ok, results: initial_results} = state ->
-        {num_parsers, s} = Enum.reduce(parsers, {0, state}, fn
-          (parser, {n, %ParserState{status: :ok, results: r_last} = s}) ->
+        {pipe_results, new_state} = Enum.reduce(parsers, {[], state}, fn
+          (parser, {acc, %ParserState{status: :ok, results: r} = s}) ->
             case parser.(s) do
-              %ParserState{status: :ok, results: r} = ps ->
-                case {Enum.count(r_last), Enum.count(r)} do
-                  {x, x} -> {n, ps}
-                  _      -> {n+1, ps}
-                end
-              %ParserState{} = ps -> {n, ps}
+              %ParserState{status: :ok, results: ^r} = s -> {acc, s}
+              %ParserState{status: :ok, results: []} = s -> {acc, s}
+              %ParserState{status: :ok, results: [last|rs]} = s ->
+                {[last|acc], %{s | :results => rs}}
+              %ParserState{} = s -> {acc, s}
             end
-          (_parser, res) -> res
+          (_parser, acc) -> acc
         end)
-        case s do
-          %ParserState{status: :ok, results: final_results} = s ->
-            transforming = final_results
-                           |> Enum.slice(0, num_parsers)
-                           |> Enum.reverse
-            transformed = transform.(transforming)
-            %{s | :results => [transformed|initial_results]}
+        case new_state do
+          %ParserState{status: :ok, results: rs} = s ->
+            transformed = transform.(Enum.reverse(pipe_results))
+            %{s | :results => [transformed|rs]}
           %ParserState{} = s -> s
         end
       %ParserState{} = state -> state
@@ -271,8 +245,10 @@ defmodule Combine.Parsers.Base do
       [[1, 2, 3]]
   """
   @spec sequence([parser]) :: parser
-  def sequence(parsers) when is_list(parsers) do
-    pipe(parsers, fn results -> results end)
+  defmacro sequence(parsers) when is_list(parsers) do
+    quote do
+      pipe(unquote(parsers), &(&1))
+    end
   end
 
   @doc """
@@ -285,7 +261,11 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("123-234", sequence([integer, char]) |> map(sequence([integer]), fn [x] -> x * 2 end))
       [[123, "-"], 468]
   """
-  defcombinator sequence(parser, parsers)
+  defmacro sequence(parser, parsers) do
+    quote do
+      pipe(unquote(parser), unquote(parsers), &(&1))
+    end
+  end
 
   @doc """
   Applies `parser1` and `parser2` in sequence, then sends their results
