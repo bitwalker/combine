@@ -1,8 +1,44 @@
 defmodule Combine do
   @moduledoc """
   Main entry point for the Combine API.
+
+  To use:
+
+      defmodule Test do
+        use Combine # defaults to parsers: [:text, :binary]
+        # use Combine, parsers: [:text]
+        # use Combine, parsers: [:binary]
+        # use Combine, parsers: [] # does not import any parsers other than Base
+
+        def foo(str) do
+          Combine.parse(str, many1(char))
+        end
+      end
   """
   alias Combine.ParserState
+
+  defmacro __using__(opts \\ []) do
+    parsers = Keyword.get(opts, :parsers, [:text, :binary])
+    case parsers do
+      [:text, :binary] ->
+        quote do
+          import Combine.Parsers.Base
+          import Combine.Parsers.Text
+          import Combine.Parsers.Binary
+        end
+      [:text] ->
+        quote do
+          import Combine.Parsers.Base
+          import Combine.Parsers.Text
+        end
+      [:binary] ->
+        quote do
+          import Combine.Parsers.Base
+          import Combine.Parsers.Binary
+        end
+      _ -> []
+    end
+  end
 
   @type parser :: Combine.Parsers.Base.parser
 
