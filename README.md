@@ -15,15 +15,14 @@ def deps do
 end
 ```
 
-Documentation is [located here](http://hexdocs.pm/combine/0.2.0/).
+Documentation is [located here](http://hexdocs.pm/combine/0.5.0/).
 
 From there the API is fairly straightforward, the docs cover what
 parser combinators are available, but here's a quick taste of how you
 use it:
 
 ```elixir
-iex> import Combine.Parsers.Base
-...> import Combine.Parsers.Text
+iex> use Combine
 ...> datetime = "2014-07-22T12:30:05.0002Z"
 ...> datetime_zoned = "2014-07-22T12:30:05.0002+0200"
 ...> parser = label(integer, "year") |>
