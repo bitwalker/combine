@@ -23,6 +23,7 @@ defmodule Combine.Parsers.Binary do
       ["H", "i"]
   """
   @spec bits(pos_integer) :: parser
+  @spec bits(parser, pos_integer) :: parser
   defparser bits(%ParserState{status: :ok, column: col, input: input, results: results} = state, n) when is_integer(n) do
     case input do
       <<bits::bitstring-size(n), rest::bitstring>> ->
@@ -44,6 +45,7 @@ defmodule Combine.Parsers.Binary do
       ["H", "i"]
   """
   @spec bytes(pos_integer) :: parser
+  @spec bytes(parser, pos_integer) :: parser
   defparser bytes(%ParserState{status: :ok, column: col, input: input, results: results} = state, n) when is_integer(n) do
     bits_size = n * 8
     case input do
@@ -65,6 +67,7 @@ defmodule Combine.Parsers.Binary do
       [85]
   """
   @spec uint(pos_integer, :be | :le) :: parser
+  @spec uint(parser, pos_integer, :be | :le) :: parser
   defparser uint(%ParserState{status: :ok, column: col, input: input, results: results} = state, size, endianness) do
     case endianness do
       :be ->
@@ -95,6 +98,7 @@ defmodule Combine.Parsers.Binary do
       [-85]
   """
   @spec int(pos_integer, :be | :le) :: parser
+  @spec int(parser, pos_integer, :be | :le) :: parser
   defparser int(%ParserState{status: :ok, column: col, input: input, results: results} = state, size, endianness)
     when is_integer(size) and endianness in [:be, :le] do
     case endianness do
@@ -125,6 +129,7 @@ defmodule Combine.Parsers.Binary do
       [2.5]
   """
   @spec float(32 | 64) :: parser
+  @spec float(parser, 32 | 64) :: parser
   defparser float(%ParserState{status: :ok, column: col, input: input, results: results} = state, size) when is_integer(size) do
     case input do
       <<num::float-size(size), rest::bitstring>> ->

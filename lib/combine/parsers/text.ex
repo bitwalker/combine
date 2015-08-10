@@ -129,6 +129,7 @@ defmodule Combine.Parsers.Text do
       ["H", "I"]
   """
   @spec upper() :: parser
+  @spec upper(parser) :: parser
   defparser upper(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
     case String.next_codepoint(input) do
       {cp, rest} ->
@@ -152,6 +153,7 @@ defmodule Combine.Parsers.Text do
       ["H", "i"]
   """
   @spec lower() :: parser
+  @spec lower(parser) :: parser
   defparser lower(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
     case String.next_codepoint(input) do
       {cp, rest} ->
@@ -176,6 +178,7 @@ defmodule Combine.Parsers.Text do
       ["h", "i", " ", "!"]
   """
   @spec space() :: parser
+  @spec space(parser) :: parser
   defparser space(%ParserState{status: :ok, column: col, input: <<?\s::utf8,rest::binary>>, results: results} = state) do
     %{state | :column => col + 1, :input => rest, :results => [" "|results]}
   end
@@ -298,6 +301,7 @@ defmodule Combine.Parsers.Text do
       [1, 0]
   """
   @spec bin_digit() :: parser
+  @spec bin_digit(parser) :: parser
   defparser bin_digit(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in [?0, ?1] do
       val = case c do
@@ -325,6 +329,7 @@ defmodule Combine.Parsers.Text do
       [3, 1]
   """
   @spec octal_digit() :: parser
+  @spec octal_digit(parser) :: parser
   defparser octal_digit(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in ?0..?7 do
       val = case c do
@@ -406,6 +411,7 @@ defmodule Combine.Parsers.Text do
       ["Hi", " ", "Paul"]
   """
   @spec string(String.t) :: parser
+  @spec string(parser, String.t) :: parser
   defparser string(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state, expected)
     when is_binary(expected) do
       byte_size = :erlang.size(expected)
@@ -430,6 +436,7 @@ defmodule Combine.Parsers.Text do
       ["Hi", " ", "Paul"]
   """
   @spec word() :: parser
+  @spec word(parser) :: parser
   def word(),       do: word_of(~r/\w/)
   def word(parser), do: word_of(parser, ~r/\w/)
 
@@ -444,6 +451,7 @@ defmodule Combine.Parsers.Text do
       ["something_with-special:characters!"]
   """
   @spec word_of(Regex.t) :: parser
+  @spec word_of(parser, Regex.t) :: parser
   defparser word_of(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state, pattern) do
     case String.next_codepoint(input) do
       {cp, rest} ->
@@ -483,6 +491,7 @@ defmodule Combine.Parsers.Text do
       ["stuff", ",", " ", 1234]
   """
   @spec integer() :: parser
+  @spec integer(parser) :: parser
   defparser integer(%ParserState{status: :ok} = state), do: fixed_integer(-1).(state)
 
   @doc """
@@ -496,7 +505,8 @@ defmodule Combine.Parsers.Text do
       ...> Combine.parse(":1234", char |> fixed_integer(3))
       [":", 123]
   """
-  @spec fixed_integer(pos_integer) :: parser
+  @spec fixed_integer(-1 | pos_integer) :: parser
+  @spec fixed_integer(parser, -1 | pos_integer) :: parser
   defparser fixed_integer(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>> = input, results: results} = state, size)
     when c in @digits do
       case extract_integer(rest, <<c::utf8>>, size - 1) do
@@ -543,6 +553,7 @@ defmodule Combine.Parsers.Text do
       ["float", ":", " ", 1234.5]
   """
   @spec float() :: parser
+  @spec float(parser) :: parser
   defparser float(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,rest::binary>> = input, results: results} = state)
     when c in @digits do
       case extract_float(rest, <<c::utf8>>, false, <<c::utf8>>) do
