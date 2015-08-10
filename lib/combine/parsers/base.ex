@@ -381,7 +381,7 @@ defmodule Combine.Parsers.Base do
   @spec sep_by(parser, parser) :: parser
   defparser sep_by(%ParserState{status: :ok, results: results} = state, parser1, parser2)
     when is_function(parser1, 1) and is_function(parser2, 1) do
-      case sep_by1(parser1, parser2).(state) do
+      case sep_by1_impl(state, parser1, parser2) do
         %ParserState{status: :ok} = s -> s
         %ParserState{status: :error} -> %{state | :results => [[] | results]}
       end
@@ -401,7 +401,7 @@ defmodule Combine.Parsers.Base do
   """
   @spec skip(parser) :: parser
   defparser skip(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
-    ignore(option(parser)).(state)
+    ignore_impl(state, option(parser))
   end
 
   @doc """
@@ -418,7 +418,7 @@ defmodule Combine.Parsers.Base do
   """
   @spec skip_many(parser) :: parser
   defparser skip_many(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
-    ignore(many(parser)).(state)
+    ignore_impl(state, many(parser))
   end
 
   @doc """
@@ -435,7 +435,7 @@ defmodule Combine.Parsers.Base do
   """
   @spec skip_many1(parser) :: parser
   defparser skip_many1(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
-    ignore(many1(parser)).(state)
+    ignore_impl(state, many1(parser))
   end
 
   @doc """
@@ -551,10 +551,8 @@ defmodule Combine.Parsers.Base do
         %ParserState{} = s -> s
       end
   end
-  def none_of(%ParserState{status: :ok} = state, parser, %Range{} = items),
-    do: none_of(state, parser, items |> Enum.to_list)
-  def none_of(%ParserState{status: :ok} = state, parser1, parser2, %Range{} = items),
-    do: none_of(state, parser1, parser2, items |> Enum.to_list)
+  defp none_of_impl(%ParserState{status: :ok} = state, parser, %Range{} = items),
+    do: none_of_impl(state, parser, items |> Enum.to_list)
 
   @doc """
   Applies `parser`. If it fails, it's error is modified to contain the given label for easier troubleshooting.

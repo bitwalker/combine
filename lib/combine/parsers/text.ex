@@ -30,7 +30,10 @@ defmodule Combine.Parsers.Text do
       ["H"]
   """
   @spec char() :: parser
-  defparser char(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
+  def char() do
+    fn state -> any_char_impl(state) end
+  end
+  defp any_char_impl(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
     case String.next_codepoint(input) do
       {cp, rest} ->
         if String.valid_character?(cp) do
@@ -55,17 +58,24 @@ defmodule Combine.Parsers.Text do
       ...> Combine.parse("Hi!", parser)
       ["H"]
   """
-  #@spec char(String.t) :: parser
+  @spec char(parser | String.t) :: parser
+  @spec char(parser, String.t) :: parser
   def char(c) when is_integer(c) do
-    fn state -> char(state, c) end
+    fn state -> char_impl(state, c) end
+  end
+  def char(parser) when is_function(parser, 1) do
+    fn
+      %ParserState{status: :ok} = state -> any_char_impl(state)
+      %ParserState{} = state -> state
+    end
   end
   defparser char(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state, <<c::utf8>>) do
     %{state | :column => col + 1, :input => rest, :results => [<<c::utf8>>|results]}
   end
-  def char(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state, c) when is_integer(c) do
+  defp char_impl(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state, c) when is_integer(c) do
     %{state | :column => col + 1, :input => rest, :results => [<<c::utf8>>|results]}
   end
-  def char(%ParserState{status: :ok, input: <<>>} = state, c) do
+  defp char_impl(%ParserState{status: :ok, input: <<>>} = state, c) do
     case c do
       c when is_binary(c) ->
         %{state | :status => :error, :error => "Expected `#{c}`, but hit end of input."}
@@ -73,7 +83,7 @@ defmodule Combine.Parsers.Text do
         %{state | :status => :error, :error => "Expected `#{<<c::utf8>>}`, but hit end of input."}
     end
   end
-  def char(%ParserState{status: :ok, line: line, column: col, input: <<next::utf8,_::binary>>} = state, c) do
+  defp char_impl(%ParserState{status: :ok, line: line, column: col, input: <<next::utf8,_::binary>>} = state, c) do
     case c do
       c when is_binary(c) ->
         %{state | :status => :error, :error => "Expected `#{c}`, but found `#{<<next::utf8>>}` at line #{line}, column #{col + 1}."}
@@ -95,14 +105,15 @@ defmodule Combine.Parsers.Text do
       ["h", "i"]
   """
   @spec letter() :: parser
+  @spec letter(parser) :: parser
   defparser letter(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in @alpha do
       %{state | :column => col + 1, :input => rest, :results => [<<c::utf8>>|results]}
   end
-  def letter(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp letter_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected character in A-Z or a-z, but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def letter(%ParserState{status: :ok, input: <<>>} = state) do
+  defp letter_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected character in A-Z or a-z, but hit end of input."}
   end
 
@@ -168,10 +179,10 @@ defmodule Combine.Parsers.Text do
   defparser space(%ParserState{status: :ok, column: col, input: <<?\s::utf8,rest::binary>>, results: results} = state) do
     %{state | :column => col + 1, :input => rest, :results => [" "|results]}
   end
-  def space(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp space_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected space but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def space(%ParserState{status: :ok, input: <<>>} = state) do
+  defp space_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected space, but hit end of input."}
   end
 
@@ -188,12 +199,9 @@ defmodule Combine.Parsers.Text do
       ["Hi", " ", "Paul"]
   """
   @spec spaces() :: parser
-  def spaces() do
-    Base.map(Base.many1(space), fn _ -> " " end)
-  end
-  def spaces(parser) do
-    parser |> Base.map(Base.many1(space), fn _ -> " " end)
-  end
+  @spec spaces(parser) :: parser
+  def spaces(),       do: Base.map(Base.many1(space), fn _ -> " " end)
+  def spaces(parser), do: parser |> Base.map(Base.many1(space), fn _ -> " " end)
 
   @doc """
   This parser will parse a single tab character from the input.
@@ -208,13 +216,14 @@ defmodule Combine.Parsers.Text do
       ["h", "i", "\t", "!"]
   """
   @spec tab() :: parser
+  @spec tab(parser) :: parser
   defparser tab(%ParserState{status: :ok, column: col, input: <<?\t::utf8,rest::binary>>, results: results} = state) do
     %{state | :column => col + 1, :input => rest, :results => ["\t"|results]}
   end
-  def tab(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp tab_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected tab but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def tab(%ParserState{status: :ok, input: <<>>} = state) do
+  defp tab_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected tab, but hit end of input."}
   end
 
@@ -231,22 +240,23 @@ defmodule Combine.Parsers.Text do
       ["H", "\\n"]
   """
   @spec newline() :: parser
+  @spec newline(parser) :: parser
   defparser newline(%ParserState{status: :ok, column: col, input: <<?\n::utf8,rest::binary>>, results: results} = state) do
     %{state | :column => col + 1, :input => rest, :results => ["\n"|results]}
   end
-  def newline(%ParserState{status: :ok, column: col, input: <<?\r::utf8,?\n::utf8,rest::binary>>, results: results} = state) do
+  defp newline_impl(%ParserState{status: :ok, column: col, input: <<?\r::utf8,?\n::utf8,rest::binary>>, results: results} = state) do
     %{state | :column => col + 2, :input => rest, :results => ["\n"|results]}
   end
-  def newline(%ParserState{status: :ok, line: line, column: col, input: <<?\r::utf8,c::utf8,_::binary>>} = state) do
+  defp newline_impl(%ParserState{status: :ok, line: line, column: col, input: <<?\r::utf8,c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected CRLF sequence, but found `\\r#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def newline(%ParserState{status: :ok, input: <<?\r::utf8>>} = state) do
+  defp newline_impl(%ParserState{status: :ok, input: <<?\r::utf8>>} = state) do
     %{state | :status => :error, :error => "Expected CRLF sequence, but hit end of input."}
   end
-  def newline(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,c::utf8,_::binary>>} = state) do
+  defp newline_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected newline but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def newline(%ParserState{status: :ok, input: <<>>} = state) do
+  defp newline_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected newline, but hit end of input."}
   end
 
@@ -263,15 +273,16 @@ defmodule Combine.Parsers.Text do
       [1, 0]
   """
   @spec digit() :: parser
+  @spec digit(parser) :: parser
   defparser digit(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in @digits do
       {digit, _} = Integer.parse(<<c::utf8>>)
       %{state | :column => col + 1, :input => rest, :results => [digit|results]}
   end
-  def digit(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp digit_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected digit found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def digit(%ParserState{status: :ok, input: <<>>} = state) do
+  defp digit_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected digit, but hit end of input."}
   end
 
@@ -295,10 +306,10 @@ defmodule Combine.Parsers.Text do
       end
       %{state | :column => col + 1, :input => rest, :results => [val|results]}
   end
-  def bin_digit(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp bin_digit_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected binary digit but found `#{<<c::utf8>>}` at line #{line}, column #{col}."}
   end
-  def bin_digit(%ParserState{status: :ok, input: <<>>} = state) do
+  defp bin_digit_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected binary digit but hit end of input."}
   end
 
@@ -328,10 +339,10 @@ defmodule Combine.Parsers.Text do
       end
       %{state | :column => col + 1, :input => rest, :results => [val|results]}
   end
-  def octal_digit(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp octal_digit_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected octal digit but found `#{<<c::utf8>>}` at line #{line}, column #{col}."}
   end
-  def octal_digit(%ParserState{status: :ok, input: <<>>} = state) do
+  defp octal_digit_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected octal digit but hit end of input."}
   end
 
@@ -347,14 +358,15 @@ defmodule Combine.Parsers.Text do
       ["d", "3"]
   """
   @spec hex_digit() :: parser
+  @spec hex_digit(parser) :: parser
   defparser hex_digit(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in @hexadecimal do
       %{state | :column => col + 1, :input => rest, :results => [<<c::utf8>>|results]}
   end
-  def hex_digit(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp hex_digit_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected hex character but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def hex_digit(%ParserState{status: :ok, input: <<>>} = state) do
+  defp hex_digit_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected hex character, but hit end of input."}
   end
 
@@ -370,14 +382,15 @@ defmodule Combine.Parsers.Text do
       ["d", "3"]
   """
   @spec alphanumeric() :: parser
+  @spec alphanumeric(parser) :: parser
   defparser alphanumeric(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in @alphanumeric do
       %{state | :column => col + 1, :input => rest, :results => [<<c::utf8>>|results]}
   end
-  def alphanumeric(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp alphanumeric_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected alphanumeric character but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
-  def alphanumeric(%ParserState{status: :ok, input: <<>>} = state) do
+  defp alphanumeric_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected alphanumeric character, but hit end of input."}
   end
 
@@ -498,10 +511,10 @@ defmodule Combine.Parsers.Text do
           %{state | :column => col + int_len, :input => rest, results: [int|results]}
       end
   end
-  def fixed_integer(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state, _size) do
+  defp fixed_integer_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state, _size) do
     %{state | :status => :error, :error => "Expected integer but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}"}
   end
-  def fixed_integer(%ParserState{status: :ok, input: <<>>} = state, _size) do
+  defp fixed_integer_impl(%ParserState{status: :ok, input: <<>>} = state, _size) do
     %{state | :status => :error, :error => "Expected integer, but hit end of input."}
   end
   defp extract_integer(<<>>, acc, 0), do: {:ok, acc}
@@ -543,10 +556,10 @@ defmodule Combine.Parsers.Text do
           %{state | :status => :error, :error => "Expected valid float, but was incomplete `#{extracted}`, at line #{line}, column #{col + extracted_len}"}
       end
   end
-  def float(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
+  defp float_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected float but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}"}
   end
-  def float(%ParserState{status: :ok, input: <<>>} = state) do
+  defp float_impl(%ParserState{status: :ok, input: <<>>} = state) do
     %{state | :status => :error, :error => "Expected float, but hit end of input."}
   end
   defp extract_float(<<>>, acc, extracting_fractional, _) do
