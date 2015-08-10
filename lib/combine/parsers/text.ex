@@ -51,8 +51,14 @@ defmodule Combine.Parsers.Text do
       ...> parser = char("H")
       ...> Combine.parse("Hi!", parser)
       ["H"]
+      ...> parser = char(?H)
+      ...> Combine.parse("Hi!", parser)
+      ["H"]
   """
   #@spec char(String.t) :: parser
+  def char(c) when is_integer(c) do
+    fn state -> char(state, c) end
+  end
   defparser char(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state, <<c::utf8>>) do
     %{state | :column => col + 1, :input => rest, :results => [<<c::utf8>>|results]}
   end
