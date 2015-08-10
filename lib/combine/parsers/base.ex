@@ -47,7 +47,7 @@ defmodule Combine.Parsers.Base do
   @spec eof() :: parser
   @spec eof(parser) :: parser
   defparser eof(%ParserState{status: :ok, input: <<>>} = state), do: state
-  def eof(%ParserState{status: :ok, line: line, column: col} = state) do
+  defp eof_impl(%ParserState{status: :ok, line: line, column: col} = state) do
     %{state | :status => :error, :error => "Expected end of input at line #{line}, column #{col}"}
   end
 
