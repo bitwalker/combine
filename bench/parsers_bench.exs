@@ -40,50 +40,66 @@ defmodule Combine.Bench do
       [2014, 7, 22, 12, 30, 5.0002, "+0200"] = Combine.parse(@datetime_zoned, parser)
     end
 
-    bench "large set of choices (one_of/word)" do
-      parser = between(char("{"), one_of(word, [
-        # Years/Centuries
-        "YYYY", "YY", "C", "WYYYY", "WYY",
-        # Months
-        "Mshort", "Mfull", "M",
-        # Days
-        "Dord", "D",
-        # Weeks
-        "Wiso", "Wmon", "Wsun", "WDmon", "WDsun", "WDshort", "WDfull",
-        # Time
-        "h24", "h12", "m", "ss", "s-epoch", "s", "am", "AM",
-        # Timezones
-        "Zname", "Z::", "Z:", "Z",
-        # Compound
-        "ISOord", "ISOweek-day", "ISOweek", "ISOdate", "ISOtime", "ISOz", "ISO",
-        "RFC822z", "RFC822", "RFC1123z", "RFC1123", "RFC3339z", "RFC3339",
-        "ANSIC", "UNIX", "kitchen"
-      ]), char("}"))
+    bench "tokenize ISO-8601 format string (one_of/word_of)" do
+      parser = many1(choice([
+        both(
+          option(one_of(char, ["_", "0"])),
+          between(char(?{), one_of(word_of(~r/[\-\w\:]/), [
+            # Years/Centuries
+            "YYYY", "YY", "C", "WYYYY", "WYY",
+            # Months
+            "Mshort", "Mfull", "M",
+            # Days
+            "Dord", "D",
+            # Weeks
+            "Wiso", "Wmon", "Wsun", "WDmon", "WDsun", "WDshort", "WDfull",
+            # Time
+            "h24", "h12", "m", "ss", "s-epoch", "s", "am", "AM",
+            # Timezones
+            "Zname", "Z::", "Z:", "Z",
+            # Compound
+            "ISOord", "ISOweek-day", "ISOweek", "ISOdate", "ISOtime", "ISOz", "ISO",
+            "RFC822z", "RFC822", "RFC1123z", "RFC1123", "RFC3339z", "RFC3339",
+            "ANSIC", "UNIX", "kitchen"
+          ]), char(?})),
+          &({&1, &2})),
+        pair_left(char(?{), char(?{)),
+        pair_left(char(?}), char(?})),
+        none_of(char, ["{", "}"])
+      ]))
 
-      [_] = Combine.parse("{kitchen}", parser)
+      [_] = Combine.parse("{YYYY}-{M}-{D}T{h24}:{m}:{s}Z", parser)
     end
 
-    bench "large set of choices (choice/parsers)" do
-      parser = between(char("{"), choice([
-        # Years/Centuries
-        string("YYYY"), string("YY"), char("C"), string("WYYYY"), string("WYY"),
-        # Months
-        string("Mshort"), string("Mfull"), char("M"),
-        # Days
-        string("Dord"), char("D"),
-        # Weeks
-        string("Wiso"), string("Wmon"), string("Wsun"), string("WDmon"), string("WDsun"), string("WDshort"), string("WDfull"),
-        # Time
-        string("h24"), string("h12"), char("m"), string("ss"), string("s-epoch"), char("s"), string("am"), string("AM"),
-        # Timezones
-        string("Zname"), string("Z::"), string("Z:"), char("Z"),
-        # Compound
-        string("ISOord"), string("ISOweek-day"), string("ISOweek"), string("ISOdate"), string("ISOtime"), string("ISOz"), string("ISO"),
-        string("RFC822z"), string("RFC822"), string("RFC1123z"), string("RFC1123"), string("RFC3339z"), string("RFC3339"),
-        string("ANSIC"), string("UNIX"), string("kitchen")
-      ]), char("}"))
+    bench "tokenize ISO-8601 format string (choice/parsers)" do
+      parser = many1(choice([
+        both(
+          option(one_of(char, ["_", "0"])),
+          between(char("{"), choice([
+            # Years/Centuries
+            string("YYYY"), string("YY"), char("C"), string("WYYYY"), string("WYY"),
+            # Months
+            string("Mshort"), string("Mfull"), char("M"),
+            # Days
+            string("Dord"), char("D"),
+            # Weeks
+            string("Wiso"), string("Wmon"), string("Wsun"), string("WDmon"), string("WDsun"), string("WDshort"), string("WDfull"),
+            # Time
+            string("h24"), string("h12"), char("m"), string("ss"), string("s-epoch"), char("s"), string("am"), string("AM"),
+            # Timezones
+            string("Zname"), string("Z::"), string("Z:"), char("Z"),
+            # Compound
+            string("ISOord"), string("ISOweek-day"), string("ISOweek"), string("ISOdate"), string("ISOtime"), string("ISOz"), string("ISO"),
+            string("RFC822z"), string("RFC822"), string("RFC1123z"), string("RFC1123"), string("RFC3339z"), string("RFC3339"),
+            string("ANSIC"), string("UNIX"), string("kitchen")
+          ]), char("}")),
+          &({&1, &2})),
+        pair_left(char(?{), char(?{)),
+        pair_left(char(?}), char(?})),
+        none_of(char, ["{", "}"])
+      ]))
 
-      [_] = Combine.parse("{kitchen}", parser)
+      [_] = Combine.parse("{YYYY}-{M}-{D}T{h24}:{m}:{s}Z", parser)
     end
 
     @zoneinfo_path Path.join([__DIR__, "..", "test", "fixtures", "zoneinfo", "America", "New_York"])
