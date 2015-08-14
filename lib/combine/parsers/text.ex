@@ -58,8 +58,8 @@ defmodule Combine.Parsers.Text do
       ...> Combine.parse("Hi!", parser)
       ["H"]
   """
-  @spec char(parser | String.t) :: parser
-  @spec char(parser, String.t) :: parser
+  @spec char(parser | String.t | pos_integer) :: parser
+  @spec char(parser, String.t | pos_integer) :: parser
   def char(c) when is_integer(c) do
     fn state -> char_impl(state, c) end
   end
