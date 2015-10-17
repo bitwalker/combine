@@ -14,8 +14,8 @@ defmodule Combine.Bench do
       Combine.parse(@chars, many(char))
     end
 
-    bench "chained any_char" do
-      Combine.parse(@chars, char |> char |> char |> char)
+    bench "word" do
+      Combine.parse(@chars, word)
     end
 
     bench "many bits" do
@@ -44,7 +44,7 @@ defmodule Combine.Bench do
       parser = many1(choice([
         both(
           option(one_of(char, ["_", "0"])),
-          between(char(?{), one_of(word_of(~r/[\-\w\:]/), [
+          between(char(?{), one_of(word_of(~r/[\-\w\:]+/), [
             # Years/Centuries
             "YYYY", "YY", "C", "WYYYY", "WYY",
             # Months
