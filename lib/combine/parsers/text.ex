@@ -33,16 +33,11 @@ defmodule Combine.Parsers.Text do
   def char() do
     fn state -> any_char_impl(state) end
   end
-  defp any_char_impl(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
-    case String.next_codepoint(input) do
-      {cp, rest} ->
-        if String.valid_character?(cp) do
-          %{state | :column => col + 1, :input => rest, :results => [cp|results]}
-        else
-          %{state | :status => :error, :error => "Encountered invalid character `#{cp}` at line #{line}, column #{col + 1}."}
-        end
-      nil -> %{state | :status => :error, :error => "Expected any character, but hit end of input."}
-    end
+  defp any_char_impl(%ParserState{status: :ok, column: col, input: <<cp::utf8, rest::binary>>, results: results} = state) do
+    %{state | :column => col + 1, :input => rest, :results => [<<cp::utf8>>|results]}
+  end
+  defp any_char_impl(%ParserState{status: :ok} = state) do
+    %{state | :status => :error, :error => "Expected any character, but hit end of input."}
   end
 
   @doc """
@@ -130,15 +125,15 @@ defmodule Combine.Parsers.Text do
   """
   @spec upper() :: parser
   @spec upper(parser) :: parser
-  defparser upper(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
-    case String.next_codepoint(input) do
-      {cp, rest} ->
-        cond do
-          cp == String.upcase(cp) -> %{state | :column => col + 1, :input => rest, :results => [cp|results]}
-          true -> %{state | :status => :error, :error => "Expected upper case character but found `#{cp}` at line #{line}, column #{col + 1}."}
-        end
-      nil -> %{state | :status => :error, :error => "Expected upper case character, but hit end of input."}
+  defparser upper(%ParserState{status: :ok, line: line, column: col, input: <<cp::utf8, rest::binary>>, results: results} = state) do
+    cstr = <<cp::utf8>>
+    cond do
+      cstr == String.upcase(cstr) -> %{state | :column => col + 1, :input => rest, :results => [cstr|results]}
+      true -> %{state | :status => :error, :error => "Expected upper case character but found `#{cstr}` at line #{line}, column #{col + 1}."}
     end
+  end
+  defp upper_impl(%ParserState{status: :ok} = state) do
+    %{state | :status => :error, :error => "Expected upper case character, but hit end of input."}
   end
 
   @doc """
@@ -154,15 +149,15 @@ defmodule Combine.Parsers.Text do
   """
   @spec lower() :: parser
   @spec lower(parser) :: parser
-  defparser lower(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state) do
-    case String.next_codepoint(input) do
-      {cp, rest} ->
-        cond do
-          cp == String.downcase(cp) -> %{state | :column => col + 1, :input => rest, :results => [cp|results]}
-          true -> %{state | :status => :error, :error => "Expected lower case character but found `#{cp}` at line #{line}, column #{col + 1}."}
-        end
-      nil -> %{state | :status => :error, :error => "Expected lower case character, but hit end of input."}
+  defparser lower(%ParserState{status: :ok, line: line, column: col, input: <<cp::utf8, rest::binary>>, results: results} = state) do
+    cstr = <<cp::utf8>>
+    cond do
+      cstr == String.downcase(cstr) -> %{state | :column => col + 1, :input => rest, :results => [cstr|results]}
+      true -> %{state | :status => :error, :error => "Expected lower case character but found `#{cstr}` at line #{line}, column #{col + 1}."}
     end
+  end
+  defp lower_impl(%ParserState{status: :ok} = state) do
+    %{state | :status => :error, :error => "Expected lower case character, but hit end of input."}
   end
 
   @doc """
@@ -279,7 +274,18 @@ defmodule Combine.Parsers.Text do
   @spec digit(parser) :: parser
   defparser digit(%ParserState{status: :ok, column: col, input: <<c::utf8,rest::binary>>, results: results} = state)
     when c in @digits do
-      {digit, _} = Integer.parse(<<c::utf8>>)
+      digit = case c do
+        ?0 -> 0
+        ?1 -> 1
+        ?2 -> 2
+        ?3 -> 3
+        ?4 -> 4
+        ?5 -> 5
+        ?6 -> 6
+        ?7 -> 7
+        ?8 -> 8
+        ?9 -> 9
+      end
       %{state | :column => col + 1, :input => rest, :results => [digit|results]}
   end
   defp digit_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
@@ -417,7 +423,7 @@ defmodule Combine.Parsers.Text do
       byte_size = :erlang.size(expected)
       case input do
         <<^expected::binary-size(byte_size), rest::binary>> ->
-          new_col = col + String.length(expected)
+          new_col = col + byte_size
           %{state | :column => new_col, :input => rest, :results => [expected|results]}
         _ ->
           %{state | :status => :error, :error => "Expected `#{expected}`, but was not found at line #{line}, column #{col}."}
@@ -437,8 +443,8 @@ defmodule Combine.Parsers.Text do
   """
   @spec word() :: parser
   @spec word(parser) :: parser
-  def word(),       do: word_of(~r/\w/)
-  def word(parser), do: word_of(parser, ~r/\w/)
+  def word(),       do: word_of(~r/\w+/)
+  def word(parser), do: word_of(parser, ~r/\w+/)
 
   @doc """
   Parses a string where each character matches the provided regular expression.
@@ -446,37 +452,36 @@ defmodule Combine.Parsers.Text do
   # Example
 
       iex> import #{__MODULE__}
-      ...> valid_chars = ~r/[!:_\\-\\w]/
+      ...> valid_chars = ~r/[!:_\\-\\w]+/
       ...> Combine.parse("something_with-special:characters!", word_of(valid_chars))
       ["something_with-special:characters!"]
   """
   @spec word_of(Regex.t) :: parser
   @spec word_of(parser, Regex.t) :: parser
   defparser word_of(%ParserState{status: :ok, line: line, column: col, input: input, results: results} = state, pattern) do
-    case String.next_codepoint(input) do
-      {cp, rest} ->
-        unless Regex.match?(pattern, cp) do
-          %{state | :status => :error, :error => "Expected word but found whitespace at line #{line}, column #{col + 1}"}
-        else
-          whole_word = extract_word(rest, cp, pattern)
-          word_len   = String.length(whole_word)
-          {_, rest}  = String.split_at(input, word_len)
-          %{state | :column => col + word_len, :input => rest, results: [whole_word|results]}
+    source = case Regex.source(pattern) do
+      <<?^, _::binary>> = source ->
+        cond do
+          String.ends_with?(source, "+") -> source
+          :else -> <<source::binary, ?+>>
         end
-      nil -> %{state | :status => :error, :error => "Expected word, but hit end of input."}
+      source ->
+        cond do
+          String.ends_with?(source, "+") -> <<?^, source::binary>>
+          :else -> <<?^, source::binary, ?+>>
+        end
+    end
+    case Regex.run(~r"#{source}", input, capture: :first) do
+      nil ->
+        %{state | :status => :error, :error => "Expected word of #{source} at line #{line}, column #{col + 1}"}
+      [word] ->
+        len = String.length(word)
+        {_, rest} = String.split_at(input, len)
+        %{state | :column => col + len, :input => rest, results: [word|results]}
     end
   end
-  defp extract_word(<<>>, acc, _), do: acc
-  defp extract_word(input, acc, pattern) do
-    case String.next_codepoint(input) do
-      {cp, rest} ->
-        unless Regex.match?(pattern, cp) do
-          acc
-        else
-          extract_word(rest, acc <> cp, pattern)
-        end
-      nil -> acc
-    end
+  defp word_of_impl(%ParserState{status: :ok} = state, _pattern) do
+    %{state | :status => :error, :error => "Expected word, but hit end of input."}
   end
 
   @doc """
