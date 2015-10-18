@@ -158,24 +158,25 @@ defmodule Combine.Parsers.Base do
   @spec pipe([parser], transform) :: parser
   @spec pipe(parser, [parser], transform) :: parser
   defparser pipe(%ParserState{status: :ok} = state, parsers, transform) when is_list(parsers) and is_function(transform, 1) do
-    {pipe_results, new_state} = Enum.reduce(parsers, {[], state}, fn
-      (parser, {acc, %ParserState{status: :ok, results: r} = s}) ->
-        case parser.(s) do
-          %ParserState{status: :ok, results: ^r} = s -> {acc, s}
-          %ParserState{status: :ok, results: []} = s -> {acc, s}
-          %ParserState{status: :ok, results: [last|rs]} = s ->
-            {[last|acc], %{s | :results => rs}}
-          %ParserState{} = s -> {acc, s}
-        end
-      (_parser, acc) -> acc
-    end)
-    case new_state do
-      %ParserState{status: :ok, results: rs} = s ->
-        transformed = transform.(Enum.reverse(pipe_results))
-        %{s | :results => [transformed|rs]}
-      %ParserState{} = s -> s
+    case do_pipe(parsers, state) do
+      {:ok, acc, %ParserState{status: :ok, results: rs} = new_state} ->
+        transformed = transform.(Enum.reverse(acc))
+        %{new_state | :results => [transformed | rs]}
+      {:error, _acc, state} ->
+        state
     end
   end
+  defp do_pipe(parsers, state), do: do_pipe(parsers, state, [])
+  defp do_pipe([], state, acc), do: {:ok, acc, state}
+  defp do_pipe([parser|parsers], %ParserState{status: :ok, results: r} = current, acc) do
+    case parser.(current) do
+      %ParserState{status: :ok, results: ^r} = next        -> do_pipe(parsers, next, acc)
+      %ParserState{status: :ok, results: []} = next        -> do_pipe(parsers, next, acc)
+      %ParserState{status: :ok, results: [last|rs]} = next -> do_pipe(parsers, %{next | :results => rs}, [last|acc])
+      %ParserState{} = next -> {:error, acc, next}
+    end
+  end
+  defp do_pipe(_parsers, %ParserState{} = state, acc), do: {:error, acc, state}
 
   @doc """
   Applies a sequence of parsers and returns their results as a list.
@@ -292,24 +293,25 @@ defmodule Combine.Parsers.Base do
   @spec times(parser, pos_integer) :: parser
   @spec times(parser, parser, pos_integer) :: parser
   defparser times(%ParserState{status: :ok} = state, parser, n) when is_function(parser, 1) and is_integer(n) do
-    {pipe_results, new_state} = Enum.reduce(1..n, {[], state}, fn
-      (_, {acc, %ParserState{status: :ok, results: r} = s}) ->
-        case parser.(s) do
-          %ParserState{status: :ok, results: ^r} = s -> {acc, s}
-          %ParserState{status: :ok, results: []} = s -> {acc, s}
-          %ParserState{status: :ok, results: [last|rs]} = s ->
-            {[last|acc], %{s | :results => rs}}
-          %ParserState{} = s -> {acc, s}
-        end
-      (_, acc) -> acc
-    end)
-    case new_state do
-      %ParserState{status: :ok, results: rs} = s ->
-        res = Enum.reverse(pipe_results)
-        %{s | :results => [res|rs]}
-      %ParserState{} = s -> s
+    case do_times(n, parser, state) do
+      {:ok, acc, %ParserState{status: :ok, results: rs} = new_state} ->
+        res = Enum.reverse(acc)
+        %{new_state | :results => [res | rs]}
+      {:error, _acc, state} ->
+        state
     end
   end
+  defp do_times(count, parser, state), do: do_times(count, parser, state, [])
+  defp do_times(0, _parser, state, acc), do: {:ok, acc, state}
+  defp do_times(count, parser, %ParserState{status: :ok, results: r} = current, acc) do
+    case parser.(current) do
+      %ParserState{status: :ok, results: ^r} = next        -> do_times(count - 1, parser, next, acc)
+      %ParserState{status: :ok, results: []} = next        -> do_times(count - 1, parser, next, acc)
+      %ParserState{status: :ok, results: [last|rs]} = next -> do_times(count - 1, parser, %{next | :results => rs}, [last|acc])
+      %ParserState{} = next -> {:error, acc, next}
+    end
+  end
+  defp do_times(_count, _parser, %ParserState{} = state, acc), do: {:error, acc, state}
 
   @doc """
   Applies `parser` one or more times. Returns results as a list.
@@ -547,7 +549,7 @@ defmodule Combine.Parsers.Base do
         %ParserState{} = s -> s
       end
   end
-  def one_of(parser1, parser2, %Range{} = items), do: one_of(parser1, parser2, items |> Enum.to_list)
+  def one_of(parser1, parser2, %Range{} = items), do: one_of(parser1, parser2, items)
 
   @doc """
   Applies a parser and then verifies that the result is not contained in the provided list of matches.
@@ -566,7 +568,7 @@ defmodule Combine.Parsers.Base do
   @spec none_of(parser, Range.t | list()) :: parser
   @spec none_of(parser, parser, Range.t | list()) :: parser
   defparser none_of(%ParserState{status: :ok, line: line, column: col} = state, parser, items)
-    when is_function(parser, 1) and is_list(items) do
+    when is_function(parser, 1) do
       case parser.(state) do
         %ParserState{status: :ok, results: [h|_]} = s ->
           cond do
@@ -580,7 +582,7 @@ defmodule Combine.Parsers.Base do
       end
   end
   defp none_of_impl(%ParserState{status: :ok} = state, parser, %Range{} = items),
-    do: none_of_impl(state, parser, items |> Enum.to_list)
+    do: none_of_impl(state, parser, items)
 
   @doc """
   Applies `parser`. If it fails, it's error is modified to contain the given label for easier troubleshooting.
