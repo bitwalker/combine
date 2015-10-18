@@ -475,8 +475,8 @@ defmodule Combine.Parsers.Text do
       nil ->
         %{state | :status => :error, :error => "Expected word of #{source} at line #{line}, column #{col + 1}"}
       [word] ->
-        len = String.length(word)
-        {_, rest} = String.split_at(input, len)
+        len  = :erlang.byte_size(word)
+        rest = binary_part(input, len, :erlang.byte_size(input) - len)
         %{state | :column => col + len, :input => rest, results: [word|results]}
     end
   end
@@ -520,9 +520,9 @@ defmodule Combine.Parsers.Text do
         {:error, :badmatch, remaining} ->
           %{state | :status => :error, :error => "Expected #{size}-digit integer, but found only #{size-remaining} digits."}
         {:ok, int_str} ->
-          {int, _}  = Integer.parse(int_str)
-          int_len   = String.length(int_str)
-          {_, rest} = String.split_at(input, int_len)
+          int  = :erlang.binary_to_integer(int_str)
+          int_len = :erlang.byte_size(int_str)
+          rest = binary_part(input, int_len, :erlang.byte_size(input) - int_len)
           %{state | :column => col + int_len, :input => rest, results: [int|results]}
       end
   end
@@ -563,9 +563,9 @@ defmodule Combine.Parsers.Text do
     when c in @digits do
       case extract_float(rest, <<c::utf8>>, false, <<c::utf8>>) do
         {:ok, float_str} ->
-          {num, _}  = Float.parse(float_str)
-          float_len = String.length(float_str)
-          {_, rest} = String.split_at(input, float_len)
+          num = :erlang.binary_to_float(float_str)
+          float_len = :erlang.byte_size(float_str)
+          rest = binary_part(input, float_len, :erlang.byte_size(input) - float_len)
           %{state | :column => col + float_len, :input => rest, results: [num|results]}
         {:error, {:incomplete_float, extracted}} ->
           extracted_len = String.length(extracted)

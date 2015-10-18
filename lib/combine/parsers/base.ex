@@ -532,9 +532,9 @@ defmodule Combine.Parsers.Base do
   """
   @spec one_of(parser, Range.t | list()) :: parser
   @spec one_of(parser, parser, Range.t | list()) :: parser
-  def one_of(parser, %Range{} = items), do: one_of(parser, items |> Enum.to_list)
+  def one_of(parser, %Range{} = items), do: one_of(parser, items)
   defparser one_of(%ParserState{status: :ok, line: line, column: col} = state, parser, items)
-    when is_function(parser, 1) and is_list(items) do
+    when is_function(parser, 1) do
       case parser.(state) do
         %ParserState{status: :ok, results: [h|_]} = s ->
           cond do
