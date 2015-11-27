@@ -471,7 +471,8 @@ defmodule Combine.Parsers.Text do
           :else -> <<?^, source::binary, ?+>>
         end
     end
-    case Regex.run(~r"#{source}", input, capture: :first) do
+    ropts = Regex.opts(pattern)
+    case Regex.run(Regex.compile!(source, ropts), input, capture: :first) do
       nil ->
         %{state | :status => :error, :error => "Expected word of #{source} at line #{line}, column #{col + 1}"}
       [word] ->
