@@ -87,6 +87,30 @@ defmodule Combine.Parsers.Text do
     end
   end
 
+  @doc """
+  Consumes input character-by-character while the provided predicate is true. This parser cannot fail,
+  so do not use it with many1/many, as it will never terminate.
+
+  # Examples
+
+      iex> import #{__MODULE__}
+      ...> parser = take_while(fn ?a -> true; _ -> false end)
+      ...> Combine.parse("aaaaabbbbb", parser)
+      ['aaaaa']
+  """
+  @spec take_while((char -> boolean)) :: parser
+  @spec take_while(parser, (char -> boolean)) :: parser
+  defparser take_while(%ParserState{status: :ok} = state, predicate) when is_function(predicate, 1) do
+    take_while_loop(state, predicate, [])
+  end
+  defp take_while_loop(%ParserState{input: <<>>} = state, _predicate, acc), do: %{state | :results => [Enum.reverse(acc)|state.results]}
+  defp take_while_loop(%ParserState{input: <<c::utf8, rest::binary>>, column: col} = state, predicate, acc) do
+    case predicate.(c) do
+      true -> take_while_loop(%{state | :input => rest, :column => col + 1}, predicate, [c|acc])
+      _    -> %{state | :results => [Enum.reverse(acc)|state.results]}
+    end
+  end
+
 
   @doc """
   Parses any letter in the English alphabet (A..Z or a..z).
