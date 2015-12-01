@@ -15,31 +15,35 @@ defmodule Combine.Bench.RFC2616 do
     {:ok, requests}
   end
 
+  @tokens Enum.to_list(32..127) -- '()<>@,;:\\"/[]={} \t'
+  @digits ?0..?9
+
   bench "5,500 RFC-2616 HTTP requests" do
     requests = bench_context
     request_parser = sequence([
-      word,
+      take_while(fn c -> c in @tokens end),
       ignore(space),
-      word_of(~r/[^\s]/),
+      take_while(fn ?\s -> false; _ -> true end),
       ignore(space),
       ignore(string("HTTP/")),
-      word_of(~r/[\d\.]/),
+      take_while(fn c -> c in @digits || c == ?. end),
       ignore(newline)
     ])
     header_parser = many1(sequence([
-          word_of(~r/[^:\r\n]/),
-          ignore(string(":")),
-          skip(space),
-          word_of(~r/[^\r\n]/),
-          ignore(newline)
-        ]))
+        take_while(fn c when c in [?\r, ?\n, ?:] -> false; c -> c in @tokens end),
+        ignore(string(":")),
+        skip(space),
+        take_while(fn c when c in [?\r, ?\n] -> false; _ -> true end),
+        ignore(newline)
+      ]))
     parser = many(map(
-          sequence([request_parser, header_parser, ignore(newline)]),
-          fn [[method, uri, version], headers] ->
-            headers = Enum.map(headers, fn [k, v] -> {k, v} end)
+      sequence([request_parser, header_parser, ignore(newline)]),
+      fn [[method, uri, version], headers] ->
+          headers = Enum.map(headers, fn [k, v] -> {k, v} end)
           %HttpRequest{method: method, uri: uri, http_version: version, headers: headers}
-          end))
-    Combine.parse(requests, parser)
+         other -> IO.inspect(other)
+      end))
+    [[%HttpRequest{}|_]] = Combine.parse(requests, parser)
   end
 
 end

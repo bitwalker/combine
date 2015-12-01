@@ -6,7 +6,7 @@ defmodule Combine.Test do
   @datetime "2014-07-22T12:30:05.0002Z"
   @datetime_zoned "2014-07-22T12:30:05.0002+0200"
   @zoneinfo_path Path.join([__DIR__, "fixtures", "zoneinfo", "America", "New_York"])
-  @http_requests_path Path.join([__DIR__, "fixtures", "http-requests-medium.txt"])
+  @http_requests_path Path.join([__DIR__, "fixtures", "http-requests-small.txt"])
 
   test "parse ISO 8601 datetime" do
     parser = label(integer, "year")
@@ -114,31 +114,34 @@ defmodule Combine.Test do
     defstruct method: nil, uri: nil, http_version: nil, headers: []
   end
 
+  @tokens Enum.to_list(32..127) -- '()<>@,;:\\"/[]={} \t'
+  @digits ?0..?9
   test "RFC-2616" do
     request_parser = sequence([
-      word,
+      take_while(fn c -> c in @tokens end),
       ignore(space),
-      word_of(~r/[^\s]/),
+      take_while(fn ?\s -> false; _ -> true end),
       ignore(space),
       ignore(string("HTTP/")),
-      word_of(~r/[\d\.]/),
+      take_while(fn c -> c in @digits || c == ?. end),
       ignore(newline)
     ])
     header_parser = many1(sequence([
-      word_of(~r/[^:\r\n]/),
-      ignore(string(":")),
-      skip(space),
-      word_of(~r/[^\r\n]/),
-      ignore(newline)
-    ]))
+        take_while(fn c when c in [?\r, ?\n, ?:] -> false; c -> c in @tokens end),
+        ignore(string(":")),
+        skip(space),
+        take_while(fn c when c in [?\r, ?\n] -> false; _ -> true end),
+        ignore(newline)
+      ]))
     parser = many(map(
       sequence([request_parser, header_parser, ignore(newline)]),
       fn [[method, uri, version], headers] ->
-        headers = Enum.map(headers, fn [k, v] -> {k, v} end)
-        %HttpRequest{method: method, uri: uri, http_version: version, headers: headers}
+          headers = Enum.map(headers, fn [k, v] -> {k, v} end)
+          %HttpRequest{method: method, uri: uri, http_version: version, headers: headers}
+         other -> IO.inspect(other)
       end))
-    [results] = Combine.parse_file(@http_requests_path, parser)
-    assert 5_500 = length(results)
+    assert [[%HttpRequest{}|_] = results] = Combine.parse_file(@http_requests_path, parser)
+    assert 55 = length(results)
   end
 
 end
