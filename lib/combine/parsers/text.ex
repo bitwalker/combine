@@ -275,7 +275,7 @@ defmodule Combine.Parsers.Text do
   defp newline_impl(%ParserState{status: :ok, input: <<?\r::utf8>>} = state) do
     %{state | :status => :error, :error => "Expected CRLF sequence, but hit end of input."}
   end
-  defp newline_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,c::utf8,_::binary>>} = state) do
+  defp newline_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected newline but found `#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
   end
   defp newline_impl(%ParserState{status: :ok, input: <<>>} = state) do
