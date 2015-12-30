@@ -168,11 +168,11 @@ defmodule Combine.Parsers.Base do
   end
   defp do_pipe(parsers, state), do: do_pipe(parsers, state, [])
   defp do_pipe([], state, acc), do: {:ok, acc, state}
-  defp do_pipe([parser|parsers], %ParserState{status: :ok, results: r} = current, acc) do
+  defp do_pipe([parser|parsers], %ParserState{status: :ok} = current, acc) do
     case parser.(current) do
-      %ParserState{status: :ok, results: ^r} = next        -> do_pipe(parsers, next, acc)
-      %ParserState{status: :ok, results: []} = next        -> do_pipe(parsers, next, acc)
-      %ParserState{status: :ok, results: [last|rs]} = next -> do_pipe(parsers, %{next | :results => rs}, [last|acc])
+      %ParserState{status: :ok, results: [:__ignore|rs]} = next -> do_pipe(parsers, %{next | :results => rs}, acc)
+      %ParserState{status: :ok, results: []} = next             -> do_pipe(parsers, next, acc)
+      %ParserState{status: :ok, results: [last|rs]} = next      -> do_pipe(parsers, %{next | :results => rs}, [last|acc])
       %ParserState{} = next -> {:error, acc, next}
     end
   end
@@ -303,11 +303,11 @@ defmodule Combine.Parsers.Base do
   end
   defp do_times(count, parser, state), do: do_times(count, parser, state, [])
   defp do_times(0, _parser, state, acc), do: {:ok, acc, state}
-  defp do_times(count, parser, %ParserState{status: :ok, results: r} = current, acc) do
+  defp do_times(count, parser, %ParserState{status: :ok} = current, acc) do
     case parser.(current) do
-      %ParserState{status: :ok, results: ^r} = next        -> do_times(count - 1, parser, next, acc)
-      %ParserState{status: :ok, results: []} = next        -> do_times(count - 1, parser, next, acc)
-      %ParserState{status: :ok, results: [last|rs]} = next -> do_times(count - 1, parser, %{next | :results => rs}, [last|acc])
+      %ParserState{status: :ok, results: [:__ignore|rs]} = next -> do_times(count - 1, parser, %{next | :results => rs}, acc)
+      %ParserState{status: :ok, results: []} = next             -> do_times(count - 1, parser, next, acc)
+      %ParserState{status: :ok, results: [last|rs]} = next      -> do_times(count - 1, parser, %{next | :results => rs}, [last|acc])
       %ParserState{} = next -> {:error, acc, next}
     end
   end
@@ -341,11 +341,11 @@ defmodule Combine.Parsers.Base do
     do: err
   defp many1_loop(iteration, acc, _last, %ParserState{status: :ok, results: []} = s, parser),
     do: many1_loop(iteration + 1, acc, s, parser.(s), parser)
-  defp many1_loop(iteration, acc, %ParserState{status: :ok, results: rs}, %ParserState{status: :ok, results: rs} = s, parser),
-    do: many1_loop(iteration + 1, acc, s, parser.(s), parser)
+  defp many1_loop(iteration, acc, _last, %ParserState{status: :ok, results: [:__ignore|rs]} = s, parser),
+    do: many1_loop(iteration + 1, acc, s, parser.(%{s | :results => rs}), parser)
   defp many1_loop(iteration, acc, _last, %ParserState{status: :ok, results: [h|rs]} = s, parser),
     do: many1_loop(iteration + 1, [h|acc], s, parser.(%{s | :results => rs}), parser)
-  defp many1_loop(_, acc, %ParserState{} = s, %ParserState{status: :error}, _parser),
+  defp many1_loop(_, acc, s, %ParserState{status: :error}, _parser),
     do: {acc, s}
 
   @doc """
@@ -424,7 +424,12 @@ defmodule Combine.Parsers.Base do
   @spec skip(parser) :: parser
   @spec skip(parser, parser) :: parser
   defparser skip(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
-    ignore_impl(state, option(parser))
+    case ignore_impl(state, option(parser)) do
+      %ParserState{status: :ok, results: [:__ignore|rs]} = s ->
+        %{s | :results => rs}
+      %ParserState{} = s ->
+        s
+    end
   end
 
   @doc """
@@ -482,7 +487,7 @@ defmodule Combine.Parsers.Base do
   @spec ignore(parser, parser) :: parser
   defparser ignore(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
     case parser.(state) do
-      %ParserState{status: :ok, results: [_|t]} = s -> %{s | :results => t}
+      %ParserState{status: :ok, results: [_|t]} = s -> %{s | :results => [:__ignore|t]}
       %ParserState{} = s -> s
     end
   end

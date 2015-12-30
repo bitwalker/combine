@@ -49,7 +49,8 @@ defmodule Combine do
   @spec parse(String.t, parser) :: [term] | {:error, term}
   def parse(input, parser) do
     case parser.(%ParserState{input: input}) do
-      %ParserState{status: :ok, results: res} -> Enum.reverse(res)
+      %ParserState{status: :ok, results: res} ->
+        res |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
       %ParserState{error: res}                -> {:error, res}
       x                                       -> {:error, {:fatal, x}}
     end
@@ -64,12 +65,21 @@ defmodule Combine do
     case File.read(path) do
       {:ok, contents} ->
         case parser.(%ParserState{input: contents}) do
-          %ParserState{status: :ok, results: res} -> Enum.reverse(res)
+          %ParserState{status: :ok, results: res} ->
+            res |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
           %ParserState{error: res}                -> {:error, res}
           x                                       -> {:error, {:fatal, x}}
         end
       {:error, _} = err -> err
     end
   end
+
+  defp ignore_filter(:__ignore), do: false
+  defp ignore_filter(_), do: true
+
+  defp filter_ignores(element) when is_list(element) do
+    Enum.filter_map(element, &ignore_filter/1, &filter_ignores/1)
+  end
+  defp filter_ignores(element), do: element
 
 end
