@@ -63,13 +63,7 @@ defmodule Combine do
   @spec parse_file(String.t, parser) :: [term] | {:error, term}
   def parse_file(path, parser) do
     case File.read(path) do
-      {:ok, contents} ->
-        case parser.(%ParserState{input: contents}) do
-          %ParserState{status: :ok, results: res} ->
-            res |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
-          %ParserState{error: res}                -> {:error, res}
-          x                                       -> {:error, {:fatal, x}}
-        end
+      {:ok, contents} -> parse(contents, parser)
       {:error, _} = err -> err
     end
   end
