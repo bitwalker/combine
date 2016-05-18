@@ -23,7 +23,7 @@ defmodule Combine.Parsers.Base do
   This parser will fail with the given error message.
   """
   @spec fail(String.t) :: parser
-  @spec fail(parser, String.T) :: parser
+  @spec fail(parser, String.t) :: parser
   defparser fail(%ParserState{status: :ok} = state, message), do: %{state | :status => :error, :error => message}
 
   @doc """
