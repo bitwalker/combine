@@ -17,7 +17,7 @@ defmodule Combine.Mixfile do
   defp deps do
     [{:ex_doc, "~> 0.10", only: [:dev, :docs]},
      {:earmark, ">= 0.0.0", only: [:dev, :docs]},
-     {:benchfella, "~> 0.2", only: :dev},
+     {:benchfella, "~> 0.3", only: :dev},
      {:dialyze, "~> 0.2", only: :dev}]
   end
 
