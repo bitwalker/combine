@@ -8,6 +8,41 @@ defmodule Combine.Test do
   @zoneinfo_path Path.join([__DIR__, "fixtures", "zoneinfo", "America", "New_York"])
   @http_requests_path Path.join([__DIR__, "fixtures", "http-requests-small.txt"])
 
+  defmodule DateTimeParser do
+    use Combine
+
+    def parse(str) when is_binary(str), do: Combine.parse(str, parser)
+
+    defp parser, do: choice([datetime, date, time])
+    def date do
+      label(integer, "year")
+      |> ignore(char("-"))
+      |> label(integer, "month")
+      |> ignore(char("-"))
+      |> label(integer, "day")
+    end
+    def time do
+        label(integer, "hour")
+        |> ignore(char(":"))
+        |> label(integer, "minute")
+        |> ignore(char(":"))
+        |> label(float, "seconds")
+        |> either(
+          map(char("Z"), fn _ -> "UTC" end),
+          pipe([either(char("-"), char("+")), word], &(Enum.join(&1)))
+        )
+    end
+    def datetime, do: sequence([date, ignore(char(?T)), time])
+  end
+
+  test "test DateTimeParser example" do
+    assert [2014,7,22] = Combine.parse(@datetime, DateTimeParser.date)
+    assert [12,30,5.0002,"UTC"] = Combine.parse("12:30:05.0002Z", DateTimeParser.time)
+    assert [[2014,7,22,12,30,5.0002,"UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime)
+    parsed = DateTimeParser.parse(@datetime)
+    assert [[2014,7,22,12,30,5.0002,"UTC"]] = parsed
+  end
+
   test "parse ISO 8601 datetime" do
     parser = label(integer, "year")
              |> ignore(char("-"))

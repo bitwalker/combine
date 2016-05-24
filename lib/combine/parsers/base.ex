@@ -158,10 +158,11 @@ defmodule Combine.Parsers.Base do
   @spec pipe([parser], transform) :: parser
   @spec pipe(parser, [parser], transform) :: parser
   defparser pipe(%ParserState{status: :ok} = state, parsers, transform) when is_list(parsers) and is_function(transform, 1) do
-    case do_pipe(parsers, state) do
-      {:ok, acc, %ParserState{status: :ok, results: rs} = new_state} ->
+    orig_results = state.results
+    case do_pipe(parsers, %{state | :results => []}) do
+      {:ok, acc, %ParserState{status: :ok} = new_state} ->
         transformed = transform.(Enum.reverse(acc))
-        %{new_state | :results => [transformed | rs]}
+        %{new_state | :results => [transformed | orig_results]}
       {:error, _acc, state} ->
         state
     end
@@ -169,10 +170,10 @@ defmodule Combine.Parsers.Base do
   defp do_pipe(parsers, state), do: do_pipe(parsers, state, [])
   defp do_pipe([], state, acc), do: {:ok, acc, state}
   defp do_pipe([parser|parsers], %ParserState{status: :ok} = current, acc) do
-    case parser.(current) do
-      %ParserState{status: :ok, results: [:__ignore|rs]} = next -> do_pipe(parsers, %{next | :results => rs}, acc)
+    case parser.(%{current | :results => []}) do
+      %ParserState{status: :ok, results: [:__ignore]} = next -> do_pipe(parsers, %{next | :results => []}, acc)
       %ParserState{status: :ok, results: []} = next             -> do_pipe(parsers, next, acc)
-      %ParserState{status: :ok, results: [last|rs]} = next      -> do_pipe(parsers, %{next | :results => rs}, [last|acc])
+      %ParserState{status: :ok, results: rs} = next      -> do_pipe(parsers, %{next | :results => []}, rs ++ acc)
       %ParserState{} = next -> {:error, acc, next}
     end
   end

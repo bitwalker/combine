@@ -51,8 +51,10 @@ defmodule Combine do
     case parser.(%ParserState{input: input}) do
       %ParserState{status: :ok, results: res} ->
         res |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
-      %ParserState{error: res}                -> {:error, res}
-      x                                       -> {:error, {:fatal, x}}
+      %ParserState{error: res} ->
+        {:error, res}
+      x ->
+        {:error, {:fatal, x}}
     end
   end
 
