@@ -518,7 +518,11 @@ defmodule Combine.Parsers.Base do
           cond do
             predicate.(h) -> s
             true ->
-              %{s | :status => :error, :error => "Could not satisfy predicate for `#{h}` at line #{line}, column #{col}"}
+              %{s | :status => :error,
+                    :error => "Could not satisfy predicate for `#{h}` at line #{line}, column #{col}",
+                    :line => line,
+                    :column => col
+              }
           end
         %ParserState{} = s -> s
       end
