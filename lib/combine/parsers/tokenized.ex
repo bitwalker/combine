@@ -17,22 +17,28 @@ defmodule Combine.Parsers.Tokenized do
   @doc """
   # Examples
 
-      iex> import #{__MODULE__}
-      ...> parser = token(:hello)
-      ...> Combine.parse([{:hello, 1}], parser)
-      [:hello]
-      ...> Combine.parse([{:hello, 1, :world}], parser)
-      [:world]
+  iex> import #{__MODULE__}
+  ...> parser = token(:hello)
+  ...> Combine.parse([{:hello, 1}], parser)
+  [:hello]
+  ...> Combine.parse([{:hello, 1, :world}], parser)
+  [:world]
+  ...> Combine.parse([], parser)
+  {:error, "Expected hello, but hit end of input"}
   """
   @spec token(atom) :: parser
   @spec token(parser, atom) :: parser
-  defparser token(%ParserState{status: :ok, input: [first | tail], results: results} = state, category) do
-    case first do
-      {^category, pos} -> %{state | column: pos, input: tail, results: [category | results]}
-      {^category, pos, value} -> %{state | column: pos, input: tail, results: [value | results]}
-      {unexpected, pos} -> %{state | status: :error, error: "Unexpected token #{unexpected} at #{pos}"}
-      {unexpected, pos, value} -> %{state | status: :error, error: "Unexpected #{unexpected} #{value} at #{pos}"}
-      other -> "Input contained non-token #{other}"
+  defparser token(%ParserState{status: :ok, input: input, results: results} = state, category) do
+    if Enum.empty?(input) do
+      %{state | status: :error, error: "Expected #{category}, but hit end of input"}
+    else
+      case hd(input) do
+        {^category, pos} -> %{state | column: pos, input: tl(input), results: [category | results]}
+        {^category, pos, value} -> %{state | column: pos, input: tl(input), results: [value | results]}
+        {unexpected, pos} -> %{state | status: :error, error: "Unexpected token #{unexpected} at #{pos}"}
+        {unexpected, pos, value} -> %{state | status: :error, error: "Unexpected #{unexpected} #{value} at #{pos}"}
+        other -> "Input contained non-token #{other}"
+      end
     end
   end
 end
