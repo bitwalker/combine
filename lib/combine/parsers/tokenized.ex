@@ -15,6 +15,8 @@ defmodule Combine.Parsers.Tokenized do
   @type parser :: Combine.Parsers.Base.parser
 
   @doc """
+  Parser a single token of the form `{category, location}` or `{category, location, value}`
+
   # Examples
 
   iex> import #{__MODULE__}
@@ -35,8 +37,8 @@ defmodule Combine.Parsers.Tokenized do
       case hd(input) do
         {^category, pos} -> %{state | column: pos, input: tl(input), results: [category | results]}
         {^category, pos, value} -> %{state | column: pos, input: tl(input), results: [value | results]}
-        {unexpected, pos} -> %{state | status: :error, error: "Unexpected token #{unexpected} at #{pos}"}
-        {unexpected, pos, value} -> %{state | status: :error, error: "Unexpected #{unexpected} #{value} at #{pos}"}
+        {unexpected, pos} -> %{state | status: :error, error: "Unexpected token '#{unexpected}' at #{pos}"}
+        {unexpected, pos, value} -> %{state | status: :error, error: "Unexpected #{unexpected} '#{value}' at #{pos}"}
         other -> "Input contained non-token #{other}"
       end
     end
