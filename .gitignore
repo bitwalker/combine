@@ -4,3 +4,6 @@ erl_crash.dump
 *.ez
 doc
 bench/snapshots
+
+sql_lexer.beam
+test/sql_lexer.erl
