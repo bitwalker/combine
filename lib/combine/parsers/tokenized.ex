@@ -39,7 +39,7 @@ defmodule Combine.Parsers.Tokenized do
         {^category, pos, value} -> %{state | column: pos, input: tl(input), results: [value | results]}
         {unexpected, pos} -> %{state | status: :error, error: "Unexpected token '#{unexpected}' at #{inspect(pos)}"}
         {unexpected, pos, value} -> %{state | status: :error, error: "Unexpected #{unexpected} '#{value}' at #{inspect(pos)}"}
-        other -> "Input contained non-token #{other}"
+        other -> raise "Input contained non-token #{other}"
       end
     end
   end
