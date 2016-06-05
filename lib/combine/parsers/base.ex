@@ -544,7 +544,6 @@ defmodule Combine.Parsers.Base do
   """
   @spec one_of(parser, Range.t | list()) :: parser
   @spec one_of(parser, parser, Range.t | list()) :: parser
-  def one_of(parser, %Range{} = items), do: one_of(parser, items)
   defparser one_of(%ParserState{status: :ok, line: line, column: col} = state, parser, items)
     when is_function(parser, 1) do
       case parser.(state) do
@@ -559,7 +558,6 @@ defmodule Combine.Parsers.Base do
         %ParserState{} = s -> s
       end
   end
-  def one_of(parser1, parser2, %Range{} = items), do: one_of(parser1, parser2, items)
 
   @doc """
   Applies a parser and then verifies that the result is not contained in the provided list of matches.

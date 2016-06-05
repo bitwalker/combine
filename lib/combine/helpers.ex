@@ -30,15 +30,18 @@ defmodule Combine.Helpers do
     end
 
     quote do
-      def unquote(name)(unquote_splicing(other_args)) do
-        fn state -> unquote(impl_name)(state, unquote_splicing(other_args)) end
-      end
-      def unquote(name)(parser, unquote_splicing(other_args)) when is_function(parser, 1) do
-        fn
-          %Combine.ParserState{status: :ok} = state ->
-            unquote(impl_name)(parser.(state), unquote_splicing(other_args))
-          %Combine.ParserState{} = state ->
-            state
+      def unquote(name)(parser \\ nil, unquote_splicing(other_args))
+        when parser == nil or is_function(parser, 1)
+      do
+        if parser == nil do
+          fn state -> unquote(impl_name)(state, unquote_splicing(other_args)) end
+        else
+          fn
+            %Combine.ParserState{status: :ok} = state ->
+              unquote(impl_name)(parser.(state), unquote_splicing(other_args))
+            %Combine.ParserState{} = state ->
+              state
+          end
         end
       end
       defp unquote(impl_name)(%Combine.ParserState{status: :error} = state, unquote_splicing(other_args)), do: state
