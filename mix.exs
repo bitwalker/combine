@@ -9,7 +9,8 @@ defmodule Combine.Mixfile do
      start_permanent: Mix.env == :prod,
      description: "A parser combinator library for Elixir projects.",
      package: package,
-     deps: deps]
+     deps: deps,
+     docs: [source_url: "https://github.com/bitwalker/combine/"]]
   end
 
   def application, do: [applications: []]
