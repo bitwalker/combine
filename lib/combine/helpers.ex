@@ -5,6 +5,9 @@ defmodule Combine.Helpers do
     quote do
       require Combine.Helpers
       import Combine.Helpers
+
+      @type parser           :: Combine.parser
+      @type previous_parser  :: Combine.previous_parser
     end
   end
 
