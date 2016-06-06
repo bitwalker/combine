@@ -40,7 +40,8 @@ defmodule Combine do
     end
   end
 
-  @type parser :: Combine.Parsers.Base.parser
+  @type parser           :: (ParserState.t() -> ParserState.t)
+  @type previous_parser  :: parser | nil
 
   @doc """
   Given an input string and a parser, applies the parser to the input string,

@@ -7,7 +7,6 @@ defmodule Combine.Parsers.Base do
   alias Combine.ParserState
   use Combine.Helpers
 
-  @type parser     :: (Combine.ParserState.t() -> Combine.ParserState.t)
   @type predicate  :: (term -> boolean)
   @type transform  :: (term -> term)
   @type transform2 :: ((term, term) -> term)
@@ -15,22 +14,19 @@ defmodule Combine.Parsers.Base do
   @doc """
   This parser will fail with no error.
   """
-  @spec zero() :: parser
-  @spec zero(parser) :: parser
+  @spec zero(previous_parser) :: parser
   defparser zero(%ParserState{status: :ok} = state), do: %{state | :status => :error, :error => nil}
 
   @doc """
   This parser will fail with the given error message.
   """
-  @spec fail(String.t) :: parser
-  @spec fail(parser, String.t) :: parser
+  @spec fail(previous_parser, String.t) :: parser
   defparser fail(%ParserState{status: :ok} = state, message), do: %{state | :status => :error, :error => message}
 
   @doc """
   This parser will fail fatally with the given error message.
   """
-  @spec fatal(String.t) :: parser
-  @spec fatal(parser, String.t) :: parser
+  @spec fatal(previous_parser, String.t) :: parser
   defparser fatal(%ParserState{status: :ok} = state, message), do: %{state | :status => :error, :error => {:fatal, message}}
 
   @doc """
@@ -44,8 +40,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("  ", spaces |> eof)
       [" "]
   """
-  @spec eof() :: parser
-  @spec eof(parser) :: parser
+  @spec eof(previous_parser) :: parser
   defparser eof(%ParserState{status: :ok, input: <<>>} = state), do: state
   defp eof_impl(%ParserState{status: :ok, line: line, column: col} = state) do
     %{state | :status => :error, :error => "Expected end of input at line #{line}, column #{col}"}
@@ -63,8 +58,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("1234", map(integer, &(&1 * 2)))
       [2468]
   """
-  @spec map(parser, transform) :: parser
-  @spec map(parser, parser, transform) :: parser
+  @spec map(previous_parser, parser, transform) :: parser
   defparser map(%ParserState{status: :ok} = state, parser, transform) do
     case parser.(state) do
       %ParserState{status: :ok, results: [h|rest]} = s ->
@@ -87,8 +81,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("Hi", option(integer) |> word)
       [nil, "Hi"]
   """
-  @spec option(parser) :: parser
-  @spec option(parser, parser) :: parser
+  @spec option(previous_parser, parser) :: parser
   defparser option(%ParserState{status: :ok, results: results} = state, parser) when is_function(parser, 1) do
     case parser.(state) do
       %ParserState{status: :ok} = s -> s
@@ -107,8 +100,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("1234", either(float, integer))
       [1234]
   """
-  @spec either(parser, parser) :: parser
-  @spec either(parser, parser, parser) :: parser
+  @spec either(previous_parser, parser, parser) :: parser
   defparser either(%ParserState{status: :ok} = state, parser1, parser2) do
     case parser1.(state) do
       %ParserState{status: :ok} = s1 -> s1
@@ -131,8 +123,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("test", choice([float, integer, word]))
       ["test"]
   """
-  @spec choice([parser]) :: parser
-  @spec choice(parser, [parser]) :: parser
+  @spec choice(previous_parser, [parser]) :: parser
   defparser choice(%ParserState{status: :ok} = state, parsers) do
     try_choice(parsers, state, nil)
   end
@@ -155,8 +146,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("123", pipe([digit, digit, digit], fn digits -> {n, _} = Integer.parse(Enum.join(digits)); n end))
       [123]
   """
-  @spec pipe([parser], transform) :: parser
-  @spec pipe(parser, [parser], transform) :: parser
+  @spec pipe(previous_parser, [parser], transform) :: parser
   defparser pipe(%ParserState{status: :ok} = state, parsers, transform) when is_list(parsers) and is_function(transform, 1) do
     orig_results = state.results
     case do_pipe(parsers, %{state | :results => []}) do
@@ -191,8 +181,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("123-234", sequence([integer, char]) |> map(sequence([integer]), fn [x] -> x * 2 end))
       [[123, "-"], 468]
   """
-  @spec sequence([parser]) :: parser
-  @spec sequence(parser, [parser]) :: parser
+  @spec sequence(previous_parser, [parser]) :: parser
   defparser sequence(%ParserState{status: :ok} = state, parsers) when is_list(parsers) do
     pipe(parsers, &(&1)).(state)
   end
@@ -210,8 +199,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("1234-234", both(integer, both(char, integer, to_int), &(&1 + &2)))
       [1000]
   """
-  @spec both(parser, parser, transform2) :: parser
-  @spec both(parser, parser, parser, transform2) :: parser
+  @spec both(previous_parser, parser, parser, transform2) :: parser
   defparser both(%ParserState{status: :ok} = state, parser1, parser2, transform) do
     pipe([parser1, parser2], fn results -> apply(transform, results) end).(state)
   end
@@ -226,8 +214,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("234-", pair_left(integer, char))
       [234]
   """
-  @spec pair_left(parser, parser) :: parser
-  @spec pair_left(parser, parser, parser) :: parser
+  @spec pair_left(previous_parser, parser, parser) :: parser
   defparser pair_left(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([parser1, parser2], fn [result1, _] -> result1 end).(state)
   end
@@ -242,8 +229,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("-234", pair_right(char, integer))
       [234]
   """
-  @spec pair_right(parser, parser) :: parser
-  @spec pair_right(parser, parser, parser) :: parser
+  @spec pair_right(previous_parser, parser, parser) :: parser
   defparser pair_right(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([parser1, parser2], fn [_, result2] -> result2 end).(state)
   end
@@ -258,8 +244,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("-234", pair_both(char, integer))
       [{"-", 234}]
   """
-  @spec pair_both(parser, parser) :: parser
-  @spec pair_both(parser, parser, parser) :: parser
+  @spec pair_both(previous_parser, parser, parser) :: parser
   defparser pair_both(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([parser1, parser2], fn [result1, result2] -> {result1, result2} end).(state)
   end
@@ -275,8 +260,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("(234)", between(char("("), integer, char(")")))
       [234]
   """
-  @spec between(parser, parser, parser) :: parser
-  @spec between(parser, parser, parser, parser) :: parser
+  @spec between(previous_parser, parser, parser, parser) :: parser
   defparser between(%ParserState{status: :ok} = state, parser1, parser2, parser3) do
     pipe([parser1, parser2, parser3], fn [_, result, _] -> result end).(state)
   end
@@ -291,8 +275,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("123", times(digit, 3))
       [[1,2,3]]
   """
-  @spec times(parser, pos_integer) :: parser
-  @spec times(parser, parser, pos_integer) :: parser
+  @spec times(previous_parser, parser, pos_integer) :: parser
   defparser times(%ParserState{status: :ok} = state, parser, n) when is_function(parser, 1) and is_integer(n) do
     case do_times(n, parser, state) do
       {:ok, acc, %ParserState{status: :ok, results: rs} = new_state} ->
@@ -328,8 +311,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("12abc", digit |> digit |> many1(ignore(char)))
       [1, 2, []]
   """
-  @spec many1(parser) :: parser
-  @spec many1(parser, parser) :: parser
+  @spec many1(previous_parser, parser) :: parser
   defparser many1(%ParserState{status: :ok, results: initial_results} = state, parser) when is_function(parser, 1) do
     case many1_loop(0, [], state, parser.(state), parser) do
       {results, %ParserState{status: :ok} = s} ->
@@ -361,8 +343,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("", many(char))
       [[]]
   """
-  @spec many(parser) :: parser
-  @spec many(parser, parser) :: parser
+  @spec many(previous_parser, parser) :: parser
   defparser many(%ParserState{status: :ok, results: results} = state, parser) when is_function(parser, 1) do
     case many1(parser).(state) do
       %ParserState{status: :ok} = s -> s
@@ -381,8 +362,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("1, 2, 3", sep_by1(digit, string(", ")))
       [[1, 2, 3]]
   """
-  @spec sep_by1(parser, parser) :: parser
-  @spec sep_by1(parser, parser, parser) :: parser
+  @spec sep_by1(previous_parser, parser, parser) :: parser
   defparser sep_by1(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([parser1, many(pair_right(parser2, parser1))], fn [h, t] -> [h|t] end).(state)
   end
@@ -400,8 +380,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("", sep_by(digit, string(", ")))
       [[]]
   """
-  @spec sep_by(parser, parser) :: parser
-  @spec sep_by(parser, parser, parser) :: parser
+  @spec sep_by(previous_parser, parser, parser) :: parser
   defparser sep_by(%ParserState{status: :ok, results: results} = state, parser1, parser2)
     when is_function(parser1, 1) and is_function(parser2, 1) do
       case sep_by1_impl(state, parser1, parser2) do
@@ -422,8 +401,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("", skip(spaces))
       []
   """
-  @spec skip(parser) :: parser
-  @spec skip(parser, parser) :: parser
+  @spec skip(previous_parser, parser) :: parser
   defparser skip(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
     case ignore_impl(state, option(parser)) do
       %ParserState{status: :ok, results: [:__ignore|rs]} = s ->
@@ -445,8 +423,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("", skip_many(space))
       []
   """
-  @spec skip_many(parser) :: parser
-  @spec skip_many(parser, parser) :: parser
+  @spec skip_many(previous_parser, parser) :: parser
   defparser skip_many(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
     ignore_impl(state, many(parser))
   end
@@ -463,8 +440,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("", skip_many1(space))
       {:error, "Expected space, but hit end of input."}
   """
-  @spec skip_many1(parser) :: parser
-  @spec skip_many1(parser, parser) :: parser
+  @spec skip_many1(previous_parser, parser) :: parser
   defparser skip_many1(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
     ignore_impl(state, many1(parser))
   end
@@ -484,8 +460,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("hi !", parser)
       ["h", "i", "!"]
   """
-  @spec ignore(parser) :: parser
-  @spec ignore(parser, parser) :: parser
+  @spec ignore(previous_parser, parser) :: parser
   defparser ignore(%ParserState{status: :ok} = state, parser) when is_function(parser, 1) do
     case parser.(state) do
       %ParserState{status: :ok, results: [_|t]} = s -> %{s | :results => [:__ignore|t]}
@@ -509,8 +484,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("Hi", parser)
       ["H", "i"]
   """
-  @spec satisfy(parser, predicate) :: parser
-  @spec satisfy(parser, parser, predicate) :: parser
+  @spec satisfy(previous_parser, parser, predicate) :: parser
   defparser satisfy(%ParserState{status: :ok, line: line, column: col} = state, parser, predicate)
     when is_function(parser, 1) and is_function(predicate, 1) do
       case parser.(state) do
@@ -542,9 +516,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("Hi", parser)
       ["H", "i"]
   """
-  @spec one_of(parser, Range.t | list()) :: parser
-  @spec one_of(parser, parser, Range.t | list()) :: parser
-  def one_of(parser, %Range{} = items), do: one_of(parser, items)
+  @spec one_of(previous_parser, parser, Range.t | list()) :: parser
   defparser one_of(%ParserState{status: :ok, line: line, column: col} = state, parser, items)
     when is_function(parser, 1) do
       case parser.(state) do
@@ -559,7 +531,6 @@ defmodule Combine.Parsers.Base do
         %ParserState{} = s -> s
       end
   end
-  def one_of(parser1, parser2, %Range{} = items), do: one_of(parser1, parser2, items)
 
   @doc """
   Applies a parser and then verifies that the result is not contained in the provided list of matches.
@@ -575,8 +546,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("Hello", parser)
       ["H", "e"]
   """
-  @spec none_of(parser, Range.t | list()) :: parser
-  @spec none_of(parser, parser, Range.t | list()) :: parser
+  @spec none_of(previous_parser, parser, Range.t | list()) :: parser
   defparser none_of(%ParserState{status: :ok, line: line, column: col} = state, parser, items)
     when is_function(parser, 1) do
       case parser.(state) do
@@ -604,8 +574,7 @@ defmodule Combine.Parsers.Base do
       ...> Combine.parse("abc", label(integer, "year"))
       {:error, "Expected `year` at line 1, column 1."}
   """
-  @spec label(parser, String.t) :: parser
-  @spec label(parser, parser, String.t) :: parser
+  @spec label(previous_parser, parser, String.t) :: parser
   defparser label(%ParserState{status: :ok} = state, parser, name) when is_function(parser, 1) do
     case parser.(state) do
       %ParserState{status: :ok} = s -> s
