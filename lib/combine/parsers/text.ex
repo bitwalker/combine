@@ -571,7 +571,7 @@ defmodule Combine.Parsers.Text do
           %{state | :column => col + float_len, :input => rest, results: [num|results]}
         {:error, {:incomplete_float, extracted}} ->
           extracted_len = String.length(extracted)
-          %{state | :status => :error, :error => "Expected valid float, but was incomplete `#{extracted}`, at line #{line}, column #{col + extracted_len}"}
+          %{state | :status => :error, :error => "Expected valid float, but was incomplete `#{extracted}`, at line #{state.line}, column #{col + extracted_len}"}
       end
   end
   defp float_impl(%ParserState{status: :ok, line: line, column: col, input: <<c::utf8,_::binary>>} = state) do
