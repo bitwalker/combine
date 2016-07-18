@@ -16,8 +16,8 @@ defmodule Combine.Mixfile do
   def application, do: [applications: []]
 
   defp deps do
-    [{:ex_doc, "~> 0.10", only: [:dev, :docs]},
-     {:earmark, "~> 0.2", only: [:dev, :docs]},
+    [{:ex_doc, "~> 0.13", only: [:dev, :docs]},
+     {:earmark, "~> 1.0", only: [:dev, :docs]},
      {:benchfella, "~> 0.3", only: :dev},
      {:dialyze, "~> 0.2", only: :dev}]
   end
