@@ -15,7 +15,7 @@ def deps do
 end
 ```
 
-Documentation is [located here](http://hexdocs.pm/combine/0.5.0/).
+Documentation is [located here](http://hexdocs.pm/combine).
 
 From there the API is fairly straightforward, the docs cover what
 parser combinators are available, but here's a quick taste of how you
