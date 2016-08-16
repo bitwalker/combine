@@ -19,4 +19,10 @@ defmodule Combine.Parsers.Base.Test do
     parser = map(digit, fn x when div(x, 2) == 0 -> x; y -> {:error, "#{y} is not an even number!"} end) |> digit
     assert {:error, "5 is not an even number!"} = Combine.parse("50", parser)
   end
+
+
+  test "satisfy on non-string fails gracefully" do
+    parser = digit |> map(&{:tuple, &1}) |> satisfy(fn {:tuple, x} -> x < 5 end)
+    assert {:error, "Could not satisfy predicate for {:tuple, 9} at line 1, column 0"} = Combine.parse("9", parser)
+  end
 end
