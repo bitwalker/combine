@@ -493,7 +493,7 @@ defmodule Combine.Parsers.Base do
             predicate.(h) -> s
             true ->
               %{s | :status => :error,
-                    :error => "Could not satisfy predicate for `#{h}` at line #{line}, column #{col}",
+                    :error => "Could not satisfy predicate for #{inspect(h)} at line #{line}, column #{col}",
                     :line => line,
                     :column => col
               }
