@@ -26,6 +26,6 @@ defmodule Combine.Mixfile do
     [ files: ["lib", "priv", "mix.exs", "README.md", "LICENSE.md"],
       maintainers: ["Paul Schoenfelder"],
       licenses: ["MIT"],
-      links: %{ "Gitub": "https://github.com/bitwalker/combine" } ]
+      links: %{ "Github": "https://github.com/bitwalker/combine" } ]
   end
 end
