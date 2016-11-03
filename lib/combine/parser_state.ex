@@ -14,7 +14,7 @@ defmodule Combine.ParserState do
 
   @type t :: %__MODULE__{
     input: binary,
-    column: pos_integer,
+    column: non_neg_integer,
     line: pos_integer,
     results: [any],
     status: :ok | :error,
