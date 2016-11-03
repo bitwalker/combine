@@ -295,7 +295,6 @@ defmodule Combine.Parsers.Base do
       %ParserState{} = next -> {:error, acc, next}
     end
   end
-  defp do_times(_count, _parser, %ParserState{} = state, acc), do: {:error, acc, state}
 
   @doc """
   Applies `parser` one or more times. Returns results as a list.

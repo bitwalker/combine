@@ -11,6 +11,16 @@ defmodule Combine.ParserState do
     - `status` - `:ok` if the grammar rules are satisfied, `:error` otherwise
     - `error` - an error message if a grammar rule wasn't satisfied
   """
+
+  @type t :: %__MODULE__{
+    input: binary,
+    column: pos_integer,
+    line: pos_integer,
+    results: [any],
+    status: :ok | :error,
+    error: any
+  }
+
   defstruct input: <<>>,
             column: 0,
             line: 1,
