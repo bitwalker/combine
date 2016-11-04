@@ -52,7 +52,7 @@ defmodule Combine.Parsers.Text do
       ["H"]
   """
   @spec char(parser | String.t | pos_integer) :: parser
-  @spec char(parser, String.t | pos_integer) :: parser
+  @spec char(previous_parser, String.t | pos_integer) :: parser
   def char(c) when is_integer(c) do
     fn state -> char_impl(state, c) end
   end
