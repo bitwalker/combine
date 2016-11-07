@@ -583,7 +583,7 @@ defmodule Combine.Parsers.Text do
   defp extract_float(<<>>, acc, extracting_fractional, _) do
     cond do
       extracting_fractional -> {:ok, acc}
-      true -> {:error, {:incomplete_float, acc}}
+      :else                 -> {:error, {:incomplete_float, acc}}
     end
   end
   defp extract_float(<<c::utf8,rest::binary>>, acc, extracting_fractional, _)
@@ -591,7 +591,8 @@ defmodule Combine.Parsers.Text do
       extract_float(rest, <<acc::binary, c::utf8>>, extracting_fractional, <<c::utf8>>)
   end
   defp extract_float(<<?.::utf8,rest::binary>>, acc, false, _), do: extract_float(rest, <<acc::binary, ?.::utf8>>, true, ".")
-  defp extract_float(_, acc, false, <<?.::utf8>>), do: {:error, {:incomplete_float, acc}}
-  defp extract_float(_, acc, _, _), do: {:ok, acc}
+  defp extract_float(_, acc, true, <<?.::utf8>>), do: {:error, {:incomplete_float, acc}}
+  defp extract_float(_, acc, false, _), do: {:error, {:incomplete_float, acc}}
+  defp extract_float(_, acc, true, _), do: {:ok, acc}
 
 end
