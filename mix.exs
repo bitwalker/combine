@@ -23,7 +23,7 @@ defmodule Combine.Mixfile do
   end
 
   defp package do
-    [ files: ["lib", "priv", "mix.exs", "README.md", "LICENSE.md"],
+    [ files: ["lib", "mix.exs", "README.md", "LICENSE"],
       maintainers: ["Paul Schoenfelder"],
       licenses: ["MIT"],
       links: %{ "Github": "https://github.com/bitwalker/combine" } ]
