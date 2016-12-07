@@ -8,8 +8,8 @@ defmodule Combine.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      description: "A parser combinator library for Elixir projects.",
-     package: package,
-     deps: deps,
+     package: package(),
+     deps: deps(),
      docs: [source_url: "https://github.com/bitwalker/combine/"]]
   end
 
