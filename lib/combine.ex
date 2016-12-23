@@ -47,7 +47,7 @@ defmodule Combine do
   Given an input string and a parser, applies the parser to the input string,
   and returns the results as a list, or an error tuple if an error occurs.
   """
-  @spec parse(String.t, parser) :: [term] | {:error, term}
+  @spec parse(any, parser) :: [term] | {:error, term}
   def parse(input, parser) do
     case parser.(%ParserState{input: input}) do
       %ParserState{status: :ok, results: res} ->

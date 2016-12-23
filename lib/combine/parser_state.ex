@@ -13,7 +13,7 @@ defmodule Combine.ParserState do
   """
 
   @type t :: %__MODULE__{
-    input: binary,
+    input: any,
     column: non_neg_integer,
     line: pos_integer,
     results: [any],
