@@ -25,4 +25,9 @@ defmodule Combine.Parsers.Base.Test do
     parser = digit |> map(&{:tuple, &1}) |> satisfy(fn {:tuple, x} -> x < 5 end)
     assert {:error, "Could not satisfy predicate for {:tuple, 9} at line 1, column 0"} = Combine.parse("9", parser)
   end
+
+  test "followed_by returns errors from failing parser" do
+    parser = letter |> followed_by(digit)
+    assert {:error, "Expected digit found `B` at line 1, column 2."} = Combine.parse("AB", parser)
+  end
 end

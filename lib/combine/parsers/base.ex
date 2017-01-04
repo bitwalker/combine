@@ -582,4 +582,39 @@ defmodule Combine.Parsers.Base do
     end
   end
 
+  @doc """
+  Applies a `parser` and then verifies that the remaining input allows `other_parser` to succeed.
+
+  This allows lookahead without mutating the parser state
+
+  # Example
+
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = letter |> followed_by(letter)
+      ...> Combine.parse("AB", parser)
+      ["A"]
+
+  """
+  @spec followed_by(previous_parser, parser, parser) :: parser
+  defparser followed_by(%ParserState{status: :ok} = state, parser, other_parser)
+    when is_function(parser, 1) and is_function(other_parser, 1) do
+      case parser.(state) do
+        %ParserState{status: :ok, input: new_input} = new_state ->
+          case other_parser.(new_state) do
+            %ParserState{status: :ok} ->
+              new_state
+            %ParserState{error: other_parser_err} ->
+              %{new_state |
+                :status => :error,
+                :error => other_parser_err
+              }
+          end
+
+        %ParserState{} = s ->
+          s
+      end
+  end
+
+
 end
