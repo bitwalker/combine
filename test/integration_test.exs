@@ -11,52 +11,52 @@ defmodule Combine.Test do
   defmodule DateTimeParser do
     use Combine
 
-    def parse(str) when is_binary(str), do: Combine.parse(str, parser)
+    def parse(str) when is_binary(str), do: Combine.parse(str, parser())
 
-    defp parser, do: choice([datetime, date, time])
+    defp parser, do: choice([datetime(), date(), time()])
     def date do
-      label(integer, "year")
+      label(integer(), "year")
       |> ignore(char("-"))
-      |> label(integer, "month")
+      |> label(integer(), "month")
       |> ignore(char("-"))
-      |> label(integer, "day")
+      |> label(integer(), "day")
     end
     def time do
-        label(integer, "hour")
+        label(integer(), "hour")
         |> ignore(char(":"))
-        |> label(integer, "minute")
+        |> label(integer(), "minute")
         |> ignore(char(":"))
-        |> label(float, "seconds")
+        |> label(float(), "seconds")
         |> either(
           map(char("Z"), fn _ -> "UTC" end),
-          pipe([either(char("-"), char("+")), word], &(Enum.join(&1)))
+          pipe([either(char("-"), char("+")), word()], &(Enum.join(&1)))
         )
     end
-    def datetime, do: sequence([date, ignore(char(?T)), time])
+    def datetime, do: sequence([date(), ignore(char(?T)), time()])
   end
 
   test "test DateTimeParser example" do
-    assert [2014,7,22] = Combine.parse(@datetime, DateTimeParser.date)
-    assert [12,30,5.0002,"UTC"] = Combine.parse("12:30:05.0002Z", DateTimeParser.time)
-    assert [[2014,7,22,12,30,5.0002,"UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime)
+    assert [2014,7,22] = Combine.parse(@datetime, DateTimeParser.date())
+    assert [12,30,5.0002,"UTC"] = Combine.parse("12:30:05.0002Z", DateTimeParser.time())
+    assert [[2014,7,22,12,30,5.0002,"UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime())
     parsed = DateTimeParser.parse(@datetime)
     assert [[2014,7,22,12,30,5.0002,"UTC"]] = parsed
   end
 
   test "parse ISO 8601 datetime" do
-    parser = label(integer, "year")
+    parser = label(integer(), "year")
              |> ignore(char("-"))
-             |> label(integer, "month")
+             |> label(integer(), "month")
              |> ignore(char("-"))
-             |> label(integer, "day")
+             |> label(integer(), "day")
              |> ignore(char("T"))
-             |> label(integer, "hour")
+             |> label(integer(), "hour")
              |> ignore(char(":"))
-             |> label(integer, "minute")
+             |> label(integer(), "minute")
              |> ignore(char(":"))
-             |> label(float, "seconds")
+             |> label(float(), "seconds")
              |> either(map(char("Z"), fn _ -> "UTC" end),
-                       pipe([either(char("-"), char("+")), word], &(Enum.join(&1))))
+                       pipe([either(char("-"), char("+")), word()], &(Enum.join(&1))))
     assert [2014, 7, 22, 12, 30, 5.0002, "UTC"] = Combine.parse(@datetime, parser)
     assert [2014, 7, 22, 12, 30, 5.0002, "+0200"] = Combine.parse(@datetime_zoned, parser)
   end
@@ -154,22 +154,22 @@ defmodule Combine.Test do
   test "RFC-2616" do
     request_parser = sequence([
       take_while(fn c -> c in @tokens end),
-      ignore(space),
+      ignore(space()),
       take_while(fn ?\s -> false; _ -> true end),
-      ignore(space),
+      ignore(space()),
       ignore(string("HTTP/")),
       take_while(fn c -> c in @digits || c == ?. end),
-      ignore(newline)
+      ignore(newline())
     ])
     header_parser = many1(sequence([
         take_while(fn c when c in [?\r, ?\n, ?:] -> false; c -> c in @tokens end),
         ignore(string(":")),
-        skip(space),
+        skip(space()),
         take_while(fn c when c in [?\r, ?\n] -> false; _ -> true end),
-        ignore(newline)
+        ignore(newline())
       ]))
     parser = many(map(
-      sequence([request_parser, header_parser, ignore(newline)]),
+      sequence([request_parser, header_parser, ignore(newline())]),
       fn [[method, uri, version], headers] ->
           headers = Enum.map(headers, fn [k, v] -> {k, v} end)
           %HttpRequest{method: method, uri: uri, http_version: version, headers: headers}

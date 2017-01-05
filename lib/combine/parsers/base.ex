@@ -37,7 +37,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("  ", spaces |> eof)
+      ...> Combine.parse("  ", spaces() |> eof())
       [" "]
   """
   @spec eof(previous_parser) :: parser
@@ -55,7 +55,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("1234", map(integer, &(&1 * 2)))
+      ...> Combine.parse("1234", map(integer(), &(&1 * 2)))
       [2468]
   """
   @spec map(previous_parser, parser, transform) :: parser
@@ -78,7 +78,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("Hi", option(integer) |> word)
+      ...> Combine.parse("Hi", option(integer()) |> word())
       [nil, "Hi"]
   """
   @spec option(previous_parser, parser) :: parser
@@ -97,7 +97,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       iex> import Combine.Parsers.Text
-      ...> Combine.parse("1234", either(float, integer))
+      ...> Combine.parse("1234", either(float(), integer()))
       [1234]
   """
   @spec either(previous_parser, parser, parser) :: parser
@@ -120,7 +120,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       iex> import Combine.Parsers.Text
-      ...> Combine.parse("test", choice([float, integer, word]))
+      ...> Combine.parse("test", choice([float(), integer(), word()]))
       ["test"]
   """
   @spec choice(previous_parser, [parser]) :: parser
@@ -143,7 +143,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("123", pipe([digit, digit, digit], fn digits -> {n, _} = Integer.parse(Enum.join(digits)); n end))
+      ...> Combine.parse("123", pipe([digit(), digit(), digit()], fn digits -> {n, _} = Integer.parse(Enum.join(digits)); n end))
       [123]
   """
   @spec pipe(previous_parser, [parser], transform) :: parser
@@ -176,9 +176,9 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("123", sequence([digit, digit, digit]))
+      ...> Combine.parse("123", sequence([digit(), digit(), digit()]))
       [[1, 2, 3]]
-      ...> Combine.parse("123-234", sequence([integer, char]) |> map(sequence([integer]), fn [x] -> x * 2 end))
+      ...> Combine.parse("123-234", sequence([integer(), char()]) |> map(sequence([integer()]), fn [x] -> x * 2 end))
       [[123, "-"], 468]
   """
   @spec sequence(previous_parser, [parser]) :: parser
@@ -196,7 +196,7 @@ defmodule Combine.Parsers.Base do
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
       ...> to_int = fn ("-", y) -> y * -1; (_, y) -> y end
-      ...> Combine.parse("1234-234", both(integer, both(char, integer, to_int), &(&1 + &2)))
+      ...> Combine.parse("1234-234", both(integer(), both(char(), integer(), to_int), &(&1 + &2)))
       [1000]
   """
   @spec both(previous_parser, parser, parser, transform2) :: parser
@@ -211,7 +211,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("234-", pair_left(integer, char))
+      ...> Combine.parse("234-", pair_left(integer(), char()))
       [234]
   """
   @spec pair_left(previous_parser, parser, parser) :: parser
@@ -226,7 +226,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("-234", pair_right(char, integer))
+      ...> Combine.parse("-234", pair_right(char(), integer()))
       [234]
   """
   @spec pair_right(previous_parser, parser, parser) :: parser
@@ -241,7 +241,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("-234", pair_both(char, integer))
+      ...> Combine.parse("-234", pair_both(char(), integer()))
       [{"-", 234}]
   """
   @spec pair_both(previous_parser, parser, parser) :: parser
@@ -257,7 +257,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("(234)", between(char("("), integer, char(")")))
+      ...> Combine.parse("(234)", between(char("("), integer(), char(")")))
       [234]
   """
   @spec between(previous_parser, parser, parser, parser) :: parser
@@ -272,7 +272,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("123", times(digit, 3))
+      ...> Combine.parse("123", times(digit(), 3))
       [[1,2,3]]
   """
   @spec times(previous_parser, parser, pos_integer) :: parser
@@ -303,11 +303,11 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("abc", many1(char))
+      ...> Combine.parse("abc", many1(char()))
       [["a", "b", "c"]]
-      ...> Combine.parse("abc", many1(ignore(char)))
+      ...> Combine.parse("abc", many1(ignore(char())))
       [[]]
-      ...> Combine.parse("12abc", digit |> digit |> many1(ignore(char)))
+      ...> Combine.parse("12abc", digit() |> digit() |> many1(ignore(char())))
       [1, 2, []]
   """
   @spec many1(previous_parser, parser) :: parser
@@ -337,9 +337,9 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("abc", many(char))
+      ...> Combine.parse("abc", many(char()))
       [["a", "b", "c"]]
-      ...> Combine.parse("", many(char))
+      ...> Combine.parse("", many(char()))
       [[]]
   """
   @spec many(previous_parser, parser) :: parser
@@ -358,7 +358,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("1, 2, 3", sep_by1(digit, string(", ")))
+      ...> Combine.parse("1, 2, 3", sep_by1(digit(), string(", ")))
       [[1, 2, 3]]
   """
   @spec sep_by1(previous_parser, parser, parser) :: parser
@@ -374,9 +374,9 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("1, 2, 3", sep_by(digit, string(", ")))
+      ...> Combine.parse("1, 2, 3", sep_by(digit(), string(", ")))
       [[1, 2, 3]]
-      ...> Combine.parse("", sep_by(digit, string(", ")))
+      ...> Combine.parse("", sep_by(digit(), string(", ")))
       [[]]
   """
   @spec sep_by(previous_parser, parser, parser) :: parser
@@ -395,9 +395,9 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("   abc", skip(spaces) |> word)
+      ...> Combine.parse("   abc", skip(spaces()) |> word)
       ["abc"]
-      ...> Combine.parse("", skip(spaces))
+      ...> Combine.parse("", skip(spaces()))
       []
   """
   @spec skip(previous_parser, parser) :: parser
@@ -417,9 +417,9 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("   abc", skip_many(space) |> word)
+      ...> Combine.parse("   abc", skip_many(space()) |> word)
       ["abc"]
-      ...> Combine.parse("", skip_many(space))
+      ...> Combine.parse("", skip_many(space()))
       []
   """
   @spec skip_many(previous_parser, parser) :: parser
@@ -434,9 +434,9 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("   abc", skip_many1(space) |> word)
+      ...> Combine.parse("   abc", skip_many1(space()) |> word)
       ["abc"]
-      ...> Combine.parse("", skip_many1(space))
+      ...> Combine.parse("", skip_many1(space()))
       {:error, "Expected space, but hit end of input."}
   """
   @spec skip_many1(previous_parser, parser) :: parser
@@ -455,7 +455,7 @@ defmodule Combine.Parsers.Base do
       ...> parser = ignore(char("h"))
       ...> Combine.parse("h", parser)
       []
-      ...> parser = char("h") |> char("i") |> ignore(space) |> char("!")
+      ...> parser = char("h") |> char("i") |> ignore(space()) |> char("!")
       ...> Combine.parse("hi !", parser)
       ["h", "i", "!"]
   """
@@ -476,10 +476,10 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> parser = satisfy(char, fn x -> x == "H" end)
+      ...> parser = satisfy(char(), fn x -> x == "H" end)
       ...> Combine.parse("Hi", parser)
       ["H"]
-      ...> parser = char("H") |> satisfy(char, fn x -> x == "i" end)
+      ...> parser = char("H") |> satisfy(char(), fn x -> x == "i" end)
       ...> Combine.parse("Hi", parser)
       ["H", "i"]
   """
@@ -508,10 +508,10 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> parser = one_of(char, ?a..?z |> Enum.map(&(<<&1::utf8>>)))
+      ...> parser = one_of(char(), ?a..?z |> Enum.map(&(<<&1::utf8>>)))
       ...> Combine.parse("abc", parser)
       ["a"]
-      ...> parser = upper |> one_of(char, ["i", "I"])
+      ...> parser = upper() |> one_of(char(), ["i", "I"])
       ...> Combine.parse("Hi", parser)
       ["H", "i"]
   """
@@ -538,10 +538,10 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> parser = none_of(char, ?a..?z |> Enum.map(&(<<&1::utf8>>)))
+      ...> parser = none_of(char(), ?a..?z |> Enum.map(&(<<&1::utf8>>)))
       ...> Combine.parse("ABC", parser)
       ["A"]
-      ...> parser = upper |> none_of(char, ["i", "I"])
+      ...> parser = upper() |> none_of(char(), ["i", "I"])
       ...> Combine.parse("Hello", parser)
       ["H", "e"]
   """
@@ -570,7 +570,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> Combine.parse("abc", label(integer, "year"))
+      ...> Combine.parse("abc", label(integer(), "year"))
       {:error, "Expected `year` at line 1, column 1."}
   """
   @spec label(previous_parser, parser, String.t) :: parser
@@ -591,7 +591,7 @@ defmodule Combine.Parsers.Base do
 
       iex> import #{__MODULE__}
       ...> import Combine.Parsers.Text
-      ...> parser = letter |> followed_by(letter)
+      ...> parser = letter() |> followed_by(letter())
       ...> Combine.parse("AB", parser)
       ["A"]
 
