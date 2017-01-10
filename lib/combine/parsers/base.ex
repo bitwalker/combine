@@ -616,5 +616,34 @@ defmodule Combine.Parsers.Base do
       end
   end
 
+  @doc """
+  Applies a `parser` if and only if `predicate_parser` fails.
+
+  This helps conditional parsing.
+
+  # Example
+
+      iex> import #{__MODULE__}
+      ...> import Combine.Parsers.Text
+      ...> parser = if_not(letter(), char())
+      ...> Combine.parse("^", parser)
+      ["^"]
+
+  """
+  @spec if_not(previous_parser, parser, parser) :: parser
+  defparser if_not(%ParserState{status: :ok, line: line, column: col} = state, predicate_parser, parser)
+    when is_function(predicate_parser, 1) and is_function(parser, 1) do
+      case predicate_parser.(state) do
+        %ParserState{status: :ok} ->
+          %{state |
+            :status => :error,
+            :error => "Expected `if_not(predicate_parser, ...)` to fail at line #{line}, column #{col + 1}."
+          }
+
+        %ParserState{} ->
+          parser.(state)
+      end
+  end
+
 
 end

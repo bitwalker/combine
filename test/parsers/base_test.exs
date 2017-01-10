@@ -30,4 +30,9 @@ defmodule Combine.Parsers.Base.Test do
     parser = letter() |> followed_by(digit())
     assert {:error, "Expected digit found `B` at line 1, column 2."} = Combine.parse("AB", parser)
   end
+
+  test "if_not fails when first parser succeeds" do
+    parser = if_not(letter(), char())
+    assert {:error, "Expected `if_not(predicate_parser, ...)` to fail at line 1, column 1."} = Combine.parse("A", parser)
+  end
 end
