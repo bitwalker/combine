@@ -48,10 +48,10 @@ defmodule Combine do
   and returns the results as a list, or an error tuple if an error occurs.
   """
   @spec parse(any, parser) :: [term] | {:error, term}
-  def parse(input, parser) do
+  def parse(input, parser, options \\ []) do
     case parser.(%ParserState{input: input}) do
-      %ParserState{status: :ok, results: res} ->
-        res |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
+      %ParserState{status: :ok} = ps ->
+        transform_state(ps, options)
       %ParserState{error: res} ->
         {:error, res}
       x ->
@@ -79,4 +79,14 @@ defmodule Combine do
   end
   defp filter_ignores(element), do: element
 
+  defp transform_state(state, options) do
+    defaults = [kw: false]
+    options = Keyword.merge(defaults, options) |> Enum.into(%{})
+    results = state.results |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
+    if options.kw do
+        labels = state.labels |> Enum.map(&String.to_atom/1) |> Enum.reverse |> Enum.zip(results)
+    else
+        results
+    end
+  end
 end

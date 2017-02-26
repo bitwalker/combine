@@ -576,7 +576,7 @@ defmodule Combine.Parsers.Base do
   @spec label(previous_parser, parser, String.t) :: parser
   defparser label(%ParserState{status: :ok} = state, parser, name) when is_function(parser, 1) do
     case parser.(state) do
-      %ParserState{status: :ok} = s -> s
+      %ParserState{status: :ok, labels: labels} = s -> %{s | labels: [name | labels]}
       %ParserState{line: line, column: col} = s ->
         %{s | :error => "Expected `#{name}` at line #{line}, column #{col + 1}."}
     end
