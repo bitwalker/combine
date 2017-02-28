@@ -28,7 +28,7 @@ defmodule Combine.Test do
         |> ignore(char(":"))
         |> label(float(), "seconds")
         |> either(
-          map(char("Z"), fn _ -> "UTC" end),
+          map(char("Z"), fn _ -> "UTC" end) |> label("tz"),
           pipe([either(char("-"), char("+")), word()], &(Enum.join(&1)))
         )
     end
@@ -45,10 +45,9 @@ defmodule Combine.Test do
 
   test "test DateTimeParser example with kw" do
     assert [year: 2014, month: 7, day: 22] = Combine.parse(@datetime, DateTimeParser.date(), kw: true)
-    assert [hour: 12, minute: 30, seconds: 5.0002] = Combine.parse("12:30:05.0002Z", DateTimeParser.time(), kw: true)
-    assert [[2014,7,22,12,30,5.0002,"UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime(), kw: true)
-    parsed = DateTimeParser.parse(@datetime, kw: true)
-    assert [[2014,7,22,12,30,5.0002,"UTC"]] = parsed
+    assert [hour: 12, minute: 30, seconds: 5.0002, tz: "UTC"] = Combine.parse("12:30:05.0002Z", DateTimeParser.time(), kw: true)
+    assert [[year: 2014, month: 7, day: 22, hour: 12, minute: 30,
+             seconds: 5.0002, tz: "UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime(), kw: true)
   end
 
   test "parse ISO 8601 datetime" do

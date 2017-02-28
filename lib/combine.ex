@@ -84,9 +84,17 @@ defmodule Combine do
     options = Keyword.merge(defaults, options) |> Enum.into(%{})
     results = state.results |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
     if options.kw do
-        labels = state.labels |> Enum.map(&String.to_atom/1) |> Enum.reverse |> Enum.zip(results)
+        labels = state.labels |> Enum.map(&String.to_atom/1) |> Enum.reverse
+        can_zip? = length(labels) == length(results)
+        case {results, can_zip?} do
+            {[h|tail], _} when is_list(h) -> Enum.map([h|tail], &Enum.zip(labels, &1))
+            {_, true} -> labels |> Enum.zip(results)
+            _ -> raise("Can not label all parsed results")
+        end
     else
         results
     end
   end
+
+
 end
