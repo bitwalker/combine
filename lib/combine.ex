@@ -47,7 +47,7 @@ defmodule Combine do
   Given an input string and a parser, applies the parser to the input string,
   and returns the results as a list, or an error tuple if an error occurs.
   """
-  @spec parse(any, parser) :: [term] | {:error, term}
+  @spec parse(any, parser, Keyword.t) :: [term] | keyword(term) | {:error, term}
   def parse(input, parser, options \\ []) do
     case parser.(%ParserState{input: input}) do
       %ParserState{status: :ok} = ps ->
@@ -80,10 +80,10 @@ defmodule Combine do
   defp filter_ignores(element), do: element
 
   defp transform_state(state, options) do
-    defaults = [kw: false]
+    defaults = [keyword: false]
     options = Keyword.merge(defaults, options) |> Enum.into(%{})
     results = state.results |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
-    if options.kw do
+    if options.keyword do
         labels = state.labels |> Enum.map(&String.to_atom/1) |> Enum.reverse
         can_zip? = length(labels) == length(results)
         case {results, can_zip?} do

@@ -43,11 +43,11 @@ defmodule Combine.Test do
     assert [[2014,7,22,12,30,5.0002,"UTC"]] = parsed
   end
 
-  test "test DateTimeParser example with kw" do
-    assert [year: 2014, month: 7, day: 22] = Combine.parse(@datetime, DateTimeParser.date(), kw: true)
-    assert [hour: 12, minute: 30, seconds: 5.0002, tz: "UTC"] = Combine.parse("12:30:05.0002Z", DateTimeParser.time(), kw: true)
+  test "test DateTimeParser example with keyword" do
+    assert [year: 2014, month: 7, day: 22] = Combine.parse(@datetime, DateTimeParser.date(), keyword: true)
+    assert [hour: 12, minute: 30, seconds: 5.0002, tz: "UTC"] = Combine.parse("12:30:05.0002Z", DateTimeParser.time(), keyword: true)
     assert [[year: 2014, month: 7, day: 22, hour: 12, minute: 30,
-             seconds: 5.0002, tz: "UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime(), kw: true)
+             seconds: 5.0002, tz: "UTC"]] = Combine.parse(@datetime, DateTimeParser.datetime(), keyword: true)
   end
 
   test "parse ISO 8601 datetime" do
