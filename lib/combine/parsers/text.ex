@@ -252,11 +252,11 @@ defmodule Combine.Parsers.Text do
       ["H", "\\n"]
   """
   @spec newline(previous_parser) :: parser
-  defparser newline(%ParserState{status: :ok, column: col, input: <<?\n::utf8,rest::binary>>, results: results} = state) do
-    %{state | :column => col + 1, :input => rest, :results => ["\n"|results]}
+  defparser newline(%ParserState{status: :ok, line: line, input: <<?\n::utf8,rest::binary>>, results: results} = state) do
+    %{state | :column => 0, :line => line + 1, :input => rest, :results => ["\n"|results]}
   end
-  defp newline_impl(%ParserState{status: :ok, column: col, input: <<?\r::utf8,?\n::utf8,rest::binary>>, results: results} = state) do
-    %{state | :column => col + 2, :input => rest, :results => ["\n"|results]}
+  defp newline_impl(%ParserState{status: :ok, line: line, input: <<?\r::utf8,?\n::utf8,rest::binary>>, results: results} = state) do
+    %{state | :column => 0, :line => line + 1, :input => rest, :results => ["\n"|results]}
   end
   defp newline_impl(%ParserState{status: :ok, line: line, column: col, input: <<?\r::utf8,c::utf8,_::binary>>} = state) do
     %{state | :status => :error, :error => "Expected CRLF sequence, but found `\\r#{<<c::utf8>>}` at line #{line}, column #{col + 1}."}
