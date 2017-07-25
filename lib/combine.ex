@@ -51,7 +51,7 @@ defmodule Combine do
   def parse(input, parser) do
     case parser.(%ParserState{input: input}) do
       %ParserState{status: :ok, results: res} ->
-        res |> Enum.reverse |> Enum.filter_map(&ignore_filter/1, &filter_ignores/1)
+        res |> Enum.reverse |> Enum.filter(&ignore_filter/1) |> Enum.map(&filter_ignores/1)
       %ParserState{error: res} ->
         {:error, res}
       x ->
@@ -75,7 +75,7 @@ defmodule Combine do
   defp ignore_filter(_), do: true
 
   defp filter_ignores(element) when is_list(element) do
-    Enum.filter_map(element, &ignore_filter/1, &filter_ignores/1)
+    element |> Enum.filter(&ignore_filter/1) |> Enum.map(&filter_ignores/1)
   end
   defp filter_ignores(element), do: element
 
