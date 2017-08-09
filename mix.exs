@@ -10,10 +10,10 @@ defmodule Combine.Mixfile do
      description: "A parser combinator library for Elixir projects.",
      package: package(),
      deps: deps(),
-     docs: [source_url: "https://github.com/bitwalker/combine/"]]
+     docs: %{source_url: "https://github.com/bitwalker/combine/"}]
   end
 
-  def application, do: [applications: []]
+  def application, do: [extra_applications: []]
 
   defp deps do
     [{:ex_doc, "~> 0.13", only: :dev, runtime: false},
