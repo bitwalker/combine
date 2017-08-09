@@ -162,8 +162,8 @@ defmodule Combine.Parsers.Base do
   defp do_pipe([parser|parsers], %ParserState{status: :ok} = current, acc) do
     case parser.(%{current | :results => []}) do
       %ParserState{status: :ok, results: [:__ignore]} = next -> do_pipe(parsers, %{next | :results => []}, acc)
-      %ParserState{status: :ok, results: []} = next             -> do_pipe(parsers, next, acc)
-      %ParserState{status: :ok, results: rs} = next      -> do_pipe(parsers, %{next | :results => []}, rs ++ acc)
+      %ParserState{status: :ok, results: []} = next -> do_pipe(parsers, next, acc)
+      %ParserState{status: :ok, results: rs} = next -> do_pipe(parsers, %{next | :results => []}, rs ++ acc)
       %ParserState{} = next -> {:error, acc, next}
     end
   end
