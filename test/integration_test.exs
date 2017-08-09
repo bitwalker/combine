@@ -186,4 +186,60 @@ defmodule Combine.Test do
     assert 55 = length(results)
   end
 
+  defmodule Example do
+
+    use Combine
+
+    def separated_property_pairs do
+      sep_by1(property_pair(), comma_and_whitespace())
+    end
+
+    def property_pair do
+      sequence([property_name(), ignore(whitespace()), property_value()])
+    end
+
+    def property_value do
+      quoted_string()
+      |> label("PropertyValue")
+    end
+
+    def property_name do
+      ~r{[A-Z]}
+      |> word_of()
+      |> label("PropertyName")
+    end
+
+    def comma_and_whitespace do
+      ignore(sequence([char(","), many(whitespace())]))
+      #","
+      #|> char()
+      #|> ignore()
+      #|> many(whitespace())
+      #|> ignore()
+    end
+
+    def quoted_string(previous \\ nil) do
+      previous
+      |> between(char("\""), words(), char("\""))
+      |> label("QuotedStringValue")
+      |> map(&Enum.join(&1, ""))
+    end
+
+    def words do
+      many(either(word(), whitespace()))
+    end
+
+    def whitespace do
+      [space(), tab(), newline()] |> choice()
+    end
+  end
+
+  test "issue #41" do
+    assert [234] = Combine.parse("-234", pair_right(ignore(char()), integer()))
+    str = """
+    PANDA "bamboo", CURRY "noodle"
+    """
+    Combine.parse(str, Example.separated_property_pairs())
+  end
+
 end

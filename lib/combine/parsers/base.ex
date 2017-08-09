@@ -216,7 +216,11 @@ defmodule Combine.Parsers.Base do
   """
   @spec pair_left(previous_parser, parser, parser) :: parser
   defparser pair_left(%ParserState{status: :ok} = state, parser1, parser2) do
-    pipe([parser1, parser2], fn [result1, _] -> result1 end).(state)
+    pipe([preserve_ignored(parser1), preserve_ignored(parser2)],
+      fn
+        [:__preserved_ignore, _] -> :__ignore
+        [result1, _] -> result1
+      end).(state)
   end
 
   @doc """
@@ -231,7 +235,11 @@ defmodule Combine.Parsers.Base do
   """
   @spec pair_right(previous_parser, parser, parser) :: parser
   defparser pair_right(%ParserState{status: :ok} = state, parser1, parser2) do
-    pipe([parser1, parser2], fn [_, result2] -> result2 end).(state)
+    pipe([preserve_ignored(parser1), preserve_ignored(parser2)],
+      fn
+        [_, :__preserved_ignore] -> :__ignore
+        [_, result2] -> result2
+      end).(state)
   end
 
   @doc """
@@ -246,7 +254,13 @@ defmodule Combine.Parsers.Base do
   """
   @spec pair_both(previous_parser, parser, parser) :: parser
   defparser pair_both(%ParserState{status: :ok} = state, parser1, parser2) do
-    pipe([parser1, parser2], fn [result1, result2] -> {result1, result2} end).(state)
+    pipe([preserve_ignored(parser1), preserve_ignored(parser2)],
+      fn
+        [:__preserved_ignore, :__preserved_ignore] -> {:__ignore, :__ignore}
+        [:__preserved_ignore, result2] -> {:__ignore, result2}
+        [result1, :__preserved_ignore] -> {result1, :__ignore}
+        [result1, result2] -> {result1, result2}
+      end).(state)
   end
 
   @doc """
@@ -262,7 +276,11 @@ defmodule Combine.Parsers.Base do
   """
   @spec between(previous_parser, parser, parser, parser) :: parser
   defparser between(%ParserState{status: :ok} = state, parser1, parser2, parser3) do
-    pipe([parser1, parser2, parser3], fn [_, result, _] -> result end).(state)
+    pipe([preserve_ignored(parser1), preserve_ignored(parser2), preserve_ignored(parser3)],
+      fn
+        [_, :__preserved_ignore, _] -> :__ignore
+        [_, result, _] -> result
+      end).(state)
   end
 
   @doc """
@@ -464,6 +482,16 @@ defmodule Combine.Parsers.Base do
     case parser.(state) do
       %ParserState{status: :ok, results: [_|t]} = s -> %{s | :results => [:__ignore|t]}
       %ParserState{} = s -> s
+    end
+  end
+
+  @doc false
+  defparser preserve_ignored(%ParserState{status: :ok, results: rs} = state, parser) when is_function(parser, 1) do
+    case parser.(%{state | :results => []}) do
+      %ParserState{status: :ok, results: []} = s -> %{s | :results => [:__preserved_ignore|rs]}
+      %ParserState{status: :ok, results: [:__ignore]} = s -> %{s | :results => [:__preserved_ignore|rs]}
+      %ParserState{status: :ok, results: [result]} = s -> %{s | :results => [result|rs]}
+      %ParserState{status: :error} = s -> %{s | :results => rs}
     end
   end
 
