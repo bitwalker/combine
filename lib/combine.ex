@@ -47,11 +47,11 @@ defmodule Combine do
   Given an input string and a parser, applies the parser to the input string,
   and returns the results as a list, or an error tuple if an error occurs.
   """
-  @spec parse(any, parser) :: [term] | {:error, term}
-  def parse(input, parser) do
+  @spec parse(any, parser, Keyword.t) :: [term] | Keyword.t | {:error, term}
+  def parse(input, parser, options \\ []) do
     case parser.(%ParserState{input: input}) do
-      %ParserState{status: :ok, results: res} ->
-        res |> Enum.reverse |> Enum.filter(&ignore_filter/1) |> Enum.map(&filter_ignores/1)
+      %ParserState{status: :ok} = ps ->
+        transform_state(ps, options)
       %ParserState{error: res} ->
         {:error, res}
       x ->
@@ -78,5 +78,23 @@ defmodule Combine do
     element |> Enum.filter(&ignore_filter/1) |> Enum.map(&filter_ignores/1)
   end
   defp filter_ignores(element), do: element
+
+  defp transform_state(state, options) do
+    defaults = [keyword: false]
+    options = Keyword.merge(defaults, options) |> Enum.into(%{})
+    results = state.results |> Enum.reverse |> Enum.filter(&ignore_filter/1) |> Enum.map(&filter_ignores/1)
+    if options.keyword do
+        labels = state.labels |> Enum.map(&String.to_atom/1) |> Enum.reverse
+        can_zip? = length(labels) == length(results)
+        case {results, can_zip?} do
+            {[h|tail], _} when is_list(h) -> Enum.map([h|tail], &Enum.zip(labels, &1))
+            {_, true} -> labels |> Enum.zip(results)
+            _ -> raise("Can not label all parsed results")
+        end
+    else
+        results
+    end
+  end
+
 
 end
