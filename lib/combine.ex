@@ -61,7 +61,7 @@ defmodule Combine do
 
   @doc """
   Given a file path and a parser, applies the parser to the file located at that
-  path, and returns the results as a lsit, or an error tuple if an error occurs.
+  path, and returns the results as a list, or an error tuple if an error occurs.
   """
   @spec parse_file(String.t, parser) :: [term] | {:error, term}
   def parse_file(path, parser) do
