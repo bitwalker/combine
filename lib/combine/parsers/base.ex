@@ -85,7 +85,8 @@ defmodule Combine.Parsers.Base do
   defparser option(%ParserState{status: :ok, results: results} = state, parser) when is_function(parser, 1) do
     case parser.(state) do
       %ParserState{status: :ok} = s -> s
-      %ParserState{status: :error}  -> %{state | :results => [nil|results]}
+      %ParserState{status: :error, error: {:fatal, _}} = s -> s
+      %ParserState{status: :error} -> %{state | :results => [nil|results]}
     end
   end
 
@@ -163,7 +164,7 @@ defmodule Combine.Parsers.Base do
     case parser.(%{current | :results => []}) do
       %ParserState{status: :ok, results: [:__ignore]} = next -> do_pipe(parsers, %{next | :results => []}, acc)
       %ParserState{status: :ok, results: []} = next -> do_pipe(parsers, next, acc)
-      %ParserState{status: :ok, results: rs} = next -> do_pipe(parsers, %{next | :results => []}, rs ++ acc)
+      %ParserState{status: :ok, results: rs} = next -> do_pipe(parsers, %{next | :results => []}, [Enum.reverse(rs)|acc])
       %ParserState{} = next -> {:error, acc, next}
     end
   end
@@ -217,10 +218,7 @@ defmodule Combine.Parsers.Base do
   @spec pair_left(previous_parser, parser, parser) :: parser
   defparser pair_left(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([preserve_ignored(parser1), preserve_ignored(parser2)],
-      fn
-        [:__preserved_ignore, _] -> :__ignore
-        [result1, _] -> result1
-      end).(state)
+      fn [result1, _] -> result1 end).(state)
   end
 
   @doc """
@@ -236,10 +234,7 @@ defmodule Combine.Parsers.Base do
   @spec pair_right(previous_parser, parser, parser) :: parser
   defparser pair_right(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([preserve_ignored(parser1), preserve_ignored(parser2)],
-      fn
-        [_, :__preserved_ignore] -> :__ignore
-        [_, result2] -> result2
-      end).(state)
+      fn [_, result2] -> result2 end).(state)
   end
 
   @doc """
@@ -255,12 +250,7 @@ defmodule Combine.Parsers.Base do
   @spec pair_both(previous_parser, parser, parser) :: parser
   defparser pair_both(%ParserState{status: :ok} = state, parser1, parser2) do
     pipe([preserve_ignored(parser1), preserve_ignored(parser2)],
-      fn
-        [:__preserved_ignore, :__preserved_ignore] -> {:__ignore, :__ignore}
-        [:__preserved_ignore, result2] -> {:__ignore, result2}
-        [result1, :__preserved_ignore] -> {result1, :__ignore}
-        [result1, result2] -> {result1, result2}
-      end).(state)
+      fn [result1, result2] -> {result1, result2} end).(state)
   end
 
   @doc """
@@ -277,10 +267,7 @@ defmodule Combine.Parsers.Base do
   @spec between(previous_parser, parser, parser, parser) :: parser
   defparser between(%ParserState{status: :ok} = state, parser1, parser2, parser3) do
     pipe([preserve_ignored(parser1), preserve_ignored(parser2), preserve_ignored(parser3)],
-      fn
-        [_, :__preserved_ignore, _] -> :__ignore
-        [_, result, _] -> result
-      end).(state)
+      fn [_, result, _] -> result end).(state)
   end
 
   @doc """
@@ -491,6 +478,7 @@ defmodule Combine.Parsers.Base do
       %ParserState{status: :ok, results: []} = s -> %{s | :results => [:__preserved_ignore|rs]}
       %ParserState{status: :ok, results: [:__ignore]} = s -> %{s | :results => [:__preserved_ignore|rs]}
       %ParserState{status: :ok, results: [result]} = s -> %{s | :results => [result|rs]}
+      %ParserState{status: :ok, results: result} = s -> %{s | :results => [result|rs]}
       %ParserState{status: :error} = s -> %{s | :results => rs}
     end
   end
@@ -604,7 +592,8 @@ defmodule Combine.Parsers.Base do
   @spec label(previous_parser, parser, String.t) :: parser
   defparser label(%ParserState{status: :ok} = state, parser, name) when is_function(parser, 1) do
     case parser.(state) do
-      %ParserState{status: :ok, labels: labels} = s -> %{s | labels: [name | labels]}
+      %ParserState{status: :ok, labels: labels} = s ->
+        %{s | labels: [name | labels]}
       %ParserState{line: line, column: col} = s ->
         %{s | :error => "Expected `#{name}` at line #{line}, column #{col + 1}."}
     end
@@ -672,6 +661,4 @@ defmodule Combine.Parsers.Base do
           parser.(state)
       end
   end
-
-
 end

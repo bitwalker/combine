@@ -234,12 +234,53 @@ defmodule Combine.Test do
     end
   end
 
-  test "issue #41" do
-    assert [234] = Combine.parse("-234", pair_right(ignore(char()), integer()))
-    str = """
-    PANDA "bamboo", CURRY "noodle"
-    """
-    Combine.parse(str, Example.separated_property_pairs())
+  defmodule Example2 do
+
+    use Combine
+
+    def key_val_pairs(previous \\ nil) do
+      ignored_newline = newline() |> ignore()
+
+      previous
+      |> sep_by1(key_val_pair(), ignored_newline)
+    end
+
+    def key_val_pair(previous \\ nil) do
+      previous
+      |> word()
+      |> label(:key_name)
+      |> ignore(char(":"))
+      |> ignore(many(spacing()))
+      |> words()
+      |> label(:key_value)
+      |> ignore(many(spacing()))
+    end
+
+    def words(previous) do
+      previous
+      |> many(either(word(), spacing()))
+      |> map(fn ws -> Enum.join(ws, "") end)
+    end
+
+    def spacing do
+      [space(), tab()] |> choice()
+    end
+
+    def whitespace do
+      [spacing(), newline()] |> choice()
+    end
   end
 
+  test "issue #41" do
+    #assert [234] = Combine.parse("-234", pair_right(ignore(char()), integer()))
+    #str = """
+    #PANDA "bamboo", CURRY "noodle"
+    #"""
+    #Combine.parse(str, Example.separated_property_pairs())
+    str = """
+    Panda: bamboo curry noodle
+    Tree: noodle flower
+    """
+    assert [] = Combine.parse(str, Example2.key_val_pairs())
+  end
 end
