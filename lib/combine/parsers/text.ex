@@ -430,7 +430,7 @@ defmodule Combine.Parsers.Text do
       byte_size = :erlang.size(expected)
       case input do
         <<^expected::binary-size(byte_size), rest::binary>> ->
-          new_col = col + byte_size
+          new_col = col + String.length(expected)
           %{state | :column => new_col, :input => rest, :results => [expected|results]}
         _ ->
           %{state | :status => :error, :error => "Expected `#{expected}`, but was not found at line #{line}, column #{col}."}
