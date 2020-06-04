@@ -497,6 +497,8 @@ defmodule Combine.Parsers.Text do
       iex> import #{__MODULE__}
       ...> Combine.parse("1234, stuff", integer())
       [1234]
+      ...> Combine.parse("001234, stuff", integer())
+      [1234]
       ...> Combine.parse("stuff, 1234", word() |> char(",") |> space() |> integer())
       ["stuff", ",", " ", 1234]
   """
