@@ -110,7 +110,7 @@ parse ISO 8601 datetime                     10000   139.45 µs/op
 large set of choices (choice/parsers)       10000   265.04 µs/op
 ```
 
-ExParsec also appears to be falling behind on maintenace, even with PRs being submitted,
+ExParsec also appears to be falling behind on maintenance, even with PRs being submitted,
 so rather than forking I decided to write my own from scratch that met my needs.
 
 ## Parsers
