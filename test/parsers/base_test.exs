@@ -35,4 +35,14 @@ defmodule Combine.Parsers.Base.Test do
     parser = if_not(letter(), char())
     assert {:error, "Expected `if_not(predicate_parser, ...)` to fail at line 1, column 1."} = Combine.parse("A", parser)
   end
+
+  test "using bind to compose parsers" do
+    input = "a1b"
+    cont1 = fn [l1] -> integer() |> map(fn int -> {l1, int} end) end
+    cont2 = fn [{l1, int}] -> letter() |> map(fn l2 -> {l1, int, l2} end) end
+    parser = letter() |> bind(cont1) |> bind(cont2)
+
+    expected = [{"a", 1, "b"}]
+    assert ^expected = Combine.parse(input, parser)
+  end
 end

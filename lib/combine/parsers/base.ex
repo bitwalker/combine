@@ -10,6 +10,7 @@ defmodule Combine.Parsers.Base do
   @type predicate  :: (term -> boolean)
   @type transform  :: (term -> term)
   @type transform2 :: ((term, term) -> term)
+  @type binder  :: (term -> parser)
 
   @doc """
   This parser will fail with no error.
@@ -673,5 +674,28 @@ defmodule Combine.Parsers.Base do
       end
   end
 
+  @doc """
+  `bind` allows the composition of parsers.
+
+    iex> import #{__MODULE__}
+    ...> import Combine.Parsers.Text
+    ...> continuation = fn [ch] -> integer() |> map(fn num -> {ch, num} end) end
+    ...> parser = letter() |> bind(continuation)
+    ...> Combine.parse("a1", parser)
+    [{"a", 1}]
+  """
+  @spec bind(previous_parser, binder) :: parser
+  defparser bind(%ParserState{status: :ok} = state, previous_parser, binder) when is_function(binder) do
+    next_state = previous_parser.(state)
+    case next_state do
+      %ParserState{status: :error} = e -> e
+      %ParserState{results: results} = s ->
+        case binder.(results).(next_state) do
+          %ParserState{status: :error} = e -> e
+          %ParserState{results: [res|_tail]} = s ->
+            %{ s | results: [res] }
+        end
+    end
+  end
 
 end
